@@ -32,7 +32,7 @@ create table public.candidates (
   id uuid primary key default gen_random_uuid(),
   canonical_key text not null unique,
   name text not null,
-  current_role text,
+  "current_role" text,
   company text,
   years_of_experience numeric,
   skills text[] not null default '{}',
@@ -120,7 +120,7 @@ create table public.data_exports (
   created_at timestamptz not null default now()
 );
 
-create index candidates_name_idx on public.candidates using gin (to_tsvector('simple', coalesce(name, '') || ' ' || coalesce(company, '') || ' ' || coalesce(current_role, '')));
+create index candidates_name_idx on public.candidates using gin (to_tsvector('simple', coalesce(name, '') || ' ' || coalesce(company, '') || ' ' || coalesce("current_role", '')));
 create index candidates_skills_idx on public.candidates using gin (skills);
 create index search_candidates_search_idx on public.search_candidates(search_id, score desc);
 create index candidate_events_candidate_idx on public.candidate_events(candidate_id, created_at desc);
