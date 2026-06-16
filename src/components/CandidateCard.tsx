@@ -50,6 +50,7 @@ interface CandidateCardProps {
   onCopyOutreach?: () => void;
   onEnrich?: () => void;
   onSelectedChange?: (selected: boolean) => void;
+  onSaveToDb?: () => void;
 }
 
 export function CandidateCard({
@@ -66,6 +67,7 @@ export function CandidateCard({
   onCopyOutreach,
   onEnrich,
   onSelectedChange,
+  onSaveToDb,
 }: CandidateCardProps) {
   const [contactExpanded, setContactExpanded] = useState(false);
   const [scoreExpanded, setScoreExpanded] = useState(false);
@@ -253,6 +255,11 @@ export function CandidateCard({
               <Button type="button" variant="outline" size="sm" onClick={onEnrich} className="h-9 gap-1 rounded-full border-primary text-xs font-bold">
                 <Sparkles className="h-3.5 w-3.5" /> Berika kontakt
               </Button>
+              {onSaveToDb && candidate.sourceCategory !== "Intern databas" && (
+                <Button type="button" variant="default" size="sm" onClick={onSaveToDb} className="h-9 gap-1 rounded-full bg-primary text-black hover:bg-primary/95 text-xs font-bold">
+                  <Database className="h-3.5 w-3.5" /> Spara i databas
+                </Button>
+              )}
             </div>
 
             <textarea

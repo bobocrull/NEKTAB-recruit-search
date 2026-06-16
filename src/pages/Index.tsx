@@ -451,12 +451,202 @@ export default function Index() {
     clearResults();
   };
 
-  // Zero-API-Cost internal candidate search (direct query in browser / Supabase with local fallback)
+  // Free client-side web search using DuckDuckGo HTML and corsproxy.io (0 API cost!)
+  const fetchWebCandidatesFree = async (reqs: JobRequirements): Promise<any[]> => {
+    const titles = reqs.jobTitles?.length ? reqs.jobTitles : [];
+    const skills = reqs.keySkills?.length ? reqs.keySkills : [];
+    const loc = reqs.location || "";
+    
+    const titlePart = titles.length > 0 
+      ? `(${titles.map(t => `"${t}"`).join(" OR ")})`
+      : "";
+    
+    const skillsPart = skills.slice(0, 3).map(s => `"${s}"`).join(" ");
+    const locPart = loc ? `"${loc}"` : "";
+    
+    const baseQuery = [titlePart, skillsPart, locPart].filter(Boolean).join(" ");
+    
+    const queries = [
+      `site:linkedin.com/in ${baseQuery} -intitle:"jobs" -intitle:"hiring" -intitle:"rekryterare" -intitle:"recruiter"`,
+      `site:rocketreach.co ${baseQuery} -intitle:"jobs" -intitle:"hiring"`
+    ];
+
+    const found: any[] = [];
+    
+    try {
+      const fetchPromises = queries.map(async (query, qIndex) => {
+        // Use corsproxy.io to bypass CORS
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://html.duckduckgo.com/html/?q=${query}`)}`;
+        
+        const response = await fetch(proxyUrl, {
+          headers: {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+          }
+        });
+        
+        if (!response.ok) return;
+        
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const results = doc.querySelectorAll(".result");
+        
+        results.forEach((el, index) => {
+          const titleEl = el.querySelector(".result__a");
+          const snippetEl = el.querySelector(".result__snippet");
+          if (!titleEl) return;
+          
+          let url = titleEl.getAttribute("href") || "";
+          if (url.includes("uddg=")) {
+            const parts = url.split("uddg=");
+            if (parts[1]) {
+              url = decodeURIComponent(parts[1].split("&")[0]);
+            }
+          }
+          
+          const rawTitle = (titleEl.textContent || "").trim();
+          const rawSnippet = snippetEl ? (snippetEl.textContent || "").trim() : "";
+          
+          if (rawTitle.toLowerCase().includes("lediga jobb") || rawTitle.toLowerCase().includes("rekrytering") || rawTitle.toLowerCase().includes("careers")) {
+            return;
+          }
+          
+          let name = "";
+          let role = "";
+          let company = "";
+          
+          const titleClean = rawTitle.replace(/\s*\|\s*LinkedIn/i, "").replace(/\s*-\s*LinkedIn/i, "");
+          const parts = titleClean.split(/\s+-\s+|\s+\|\s+/);
+          
+          if (parts.length >= 1) {
+            name = parts[0].trim();
+            if (name.toLowerCase().includes("profil") || name.toLowerCase().includes("katalog") || name.toLowerCase().includes("directory")) {
+              return;
+            }
+          }
+          
+          if (parts.length >= 2) {
+            role = parts[1].trim();
+          }
+          
+          if (parts.length >= 3) {
+            company = parts[2].trim();
+          }
+          
+          if (!role && rawSnippet) {
+            const roleMatch = /(?:jobbar som|arbetar som|is a|works as)\s+([^,.]+)/i.exec(rawSnippet);
+            if (roleMatch) {
+              role = roleMatch[1].trim();
+            }
+          }
+          
+          let location = loc || "Sverige";
+          const locMatch = /(Västerås|Stockholm|Göteborg|Malmö|Umeå|Luleå|Sundsvall|Örebro|Linköping|Norrköping|Jönköping|Sverige)/i.exec(titleClean + " " + rawSnippet);
+          if (locMatch) {
+            location = locMatch[1];
+          }
+          
+          const foundSkills: string[] = [];
+          const keywords = ["elkraft", "elnät", "cad", "högspänning", "beredning", "projektering", "station", "transmission", "distribution", "kraftledning", "luftledning", "markkabel", "reläskydd"];
+          for (const kw of keywords) {
+            if (new RegExp(`\\b${kw}\\b`, "i").test(rawSnippet + " " + titleClean)) {
+              foundSkills.push(kw.charAt(0).toUpperCase() + kw.slice(1));
+            }
+          }
+          
+          if (name && name.split(" ").length >= 2) {
+            found.push({
+              id: `web-free-${qIndex}-${index}-${Date.now()}`,
+              name,
+              current_role: role || "Kompetens inom elnät / elkraft",
+              company: company || (url.includes("linkedin.com") ? "LinkedIn-profil" : "Externa källor"),
+              years_of_experience: 3,
+              skills: foundSkills.length > 0 ? foundSkills : ["Elkraft", "Elnät"],
+              location,
+              linkedin_url: url.includes("linkedin.com") ? url : "",
+              email: "Klicka för att hämta",
+              phone: "Klicka för att hämta",
+              avatar_url: "",
+              profile_image_url: "",
+              summary: rawSnippet,
+              sourceCategory: url.includes("linkedin.com") ? "LinkedIn" : "RocketReach"
+            });
+          }
+        });
+      });
+      
+      await Promise.all(fetchPromises);
+    } catch (err) {
+      console.error("Free web search failed:", err);
+    }
+    
+    return found;
+  };
+
+  // Save candidate from free web search into Supabase DB + local fallback
+  const saveWebCandidateToDb = async (candidate: any) => {
+    const canonicalKey = candidate.linkedin_url || `web-manual-${candidate.name.replace(/\s+/g, "-").toLowerCase()}`;
+    
+    const newCandidateObj = {
+      id: candidate.id,
+      name: candidate.name,
+      currentRole: candidate.current_role,
+      company: candidate.company,
+      yearsOfExperience: Number(candidate.years_of_experience || 3),
+      skills: candidate.skills || [],
+      location: candidate.location,
+      linkedin: candidate.linkedin_url || "",
+      email: candidate.email === "Klicka för att hämta" ? "Not available" : candidate.email,
+      phone: candidate.phone === "Klicka för att hämta" ? "Not available" : candidate.phone,
+      avatarUrl: "",
+      profileImageUrl: "",
+      summary: candidate.summary || "",
+      source: candidate.linkedin_url || "Web",
+      sourceCategory: "Intern databas" as any,
+      evidenceSnippets: [],
+      networkSignals: []
+    };
+
+    const currentLocalCands = readLocalCandidates();
+    const nextLocalCands = [newCandidateObj, ...currentLocalCands.filter(c => c.linkedin !== newCandidateObj.linkedin || c.name !== newCandidateObj.name)];
+    saveLocalCandidates(nextLocalCands);
+
+    let dbSuccess = false;
+    try {
+      const { error } = await supabase.from("candidates").upsert({
+        canonical_key: canonicalKey,
+        name: candidate.name,
+        current_role: candidate.current_role,
+        company: candidate.company,
+        years_of_experience: Number(candidate.years_of_experience || 3),
+        skills: candidate.skills || [],
+        location: candidate.location,
+        linkedin_url: candidate.linkedin_url || null,
+        email: candidate.email === "Klicka för att hämta" ? null : candidate.email,
+        phone: candidate.phone === "Klicka för att hämta" ? null : candidate.phone,
+        data_confidence: { level: "Hög", score: 85, reasons: ["Hämtad från extern sökning"] } as any,
+        last_seen_at: new Date().toISOString()
+      }, { onConflict: "canonical_key" });
+      
+      if (!error) dbSuccess = true;
+    } catch (e) {
+      console.error(e);
+    }
+
+    toast({
+      title: "Sparad!",
+      description: `Kandidaten ${candidate.name} sparades lokalt${dbSuccess ? " och i databasen!" : "!"}`,
+    });
+
+    setWebResults(prev => prev.map(c => c.id === candidate.id ? { ...c, sourceCategory: "Intern databas" } : c));
+  };
+
+  // Zero-API-Cost combined local + client-side web search
   const searchRealCandidates = async (reqs: JobRequirements) => {
     setIsSearchingWeb(true);
     setSearchError(null);
     setSelectedCandidateIds(new Set());
-    setSearchProgress({ completed: 0, total: 1, queries: ["Söker i lokala kandidatpoolen..."] });
+    setSearchProgress({ completed: 0, total: 2, queries: ["Söker i lokala kandidatpoolen..."] });
     
     try {
       let candidates: any[] = [];
@@ -495,8 +685,40 @@ export default function Index() {
         candidates = readLocalCandidates();
       }
 
+      setSearchProgress(prev => ({ completed: 1, total: 2, queries: [...prev.queries, "Söker på LinkedIn & RocketReach (0 kr API)..."] }));
+      
+      // Search web candidates using free DuckDuckGo web sourcing
+      let webCandidates: any[] = [];
+      try {
+        const foundWeb = await fetchWebCandidatesFree(reqs);
+        webCandidates = foundWeb.map(c => ({
+          id: c.id,
+          name: c.name,
+          currentRole: c.current_role,
+          company: c.company,
+          yearsOfExperience: c.years_of_experience,
+          skills: c.skills,
+          location: c.location,
+          linkedin: c.linkedin_url,
+          email: c.email,
+          phone: c.phone,
+          avatarUrl: c.avatar_url,
+          profileImageUrl: c.profile_image_url,
+          summary: c.summary,
+          source: c.linkedin_url || "Web",
+          sourceCategory: c.sourceCategory,
+          evidenceSnippets: [],
+          networkSignals: []
+        }));
+      } catch (webErr) {
+        console.warn("Free web search failed, using local only", webErr);
+      }
+
+      // Merge local and web results
+      const combinedCandidates = [...candidates, ...webCandidates];
+
       // Rank matching candidates relative to job requirements in browser
-      const scored = rankCandidates(candidates, reqs);
+      const scored = rankCandidates(combinedCandidates, reqs);
       setWebResults(scored);
       setShowShortlistOnly(false);
 
@@ -529,10 +751,10 @@ export default function Index() {
         // Ignore DB save failure in offline mode
       }
 
-      setSearchProgress({ completed: 1, total: 1, queries: ["Klar!"] });
+      setSearchProgress({ completed: 2, total: 2, queries: ["Klar!"] });
       toast({
         title: `Matchning klar!`,
-        description: `Genomsökte ${candidates.length} lokala kandidatprofiler.`,
+        description: `Genomsökte lokala poolen och webben. Hittade totalt ${scored.length} matchningar.`,
       });
     } catch (err: unknown) {
       console.error(err);
@@ -1667,6 +1889,7 @@ NEKTAB`;
                         onCopyOutreach={() => handleCopyOutreach(candidate)}
                         onEnrich={() => handleEnrich(candidate)}
                         onSelectedChange={(selected) => handleCandidateSelection(candidateId(candidate), selected)}
+                        onSaveToDb={() => saveWebCandidateToDb(candidate)}
                       />
                     </div>
                   ))}
