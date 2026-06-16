@@ -451,136 +451,52 @@ export default function Index() {
     clearResults();
   };
 
-  // Free client-side web search using DuckDuckGo HTML and corsproxy.io (0 API cost!)
+  // Call the original Edge function on bqfksdoevseeknyiglur to search the web for free (via Lovable's keys!)
   const fetchWebCandidatesFree = async (reqs: JobRequirements): Promise<any[]> => {
-    const titles = reqs.jobTitles?.length ? reqs.jobTitles : [];
-    const skills = reqs.keySkills?.length ? reqs.keySkills : [];
-    const loc = reqs.location || "";
-    
-    const titlePart = titles.length > 0 
-      ? `(${titles.map(t => `"${t}"`).join(" OR ")})`
-      : "";
-    
-    const skillsPart = skills.slice(0, 3).map(s => `"${s}"`).join(" ");
-    const locPart = loc ? `"${loc}"` : "";
-    
-    const baseQuery = [titlePart, skillsPart, locPart].filter(Boolean).join(" ");
-    
-    const queries = [
-      `site:linkedin.com/in ${baseQuery} -intitle:"jobs" -intitle:"hiring" -intitle:"rekryterare" -intitle:"recruiter"`,
-      `site:rocketreach.co ${baseQuery} -intitle:"jobs" -intitle:"hiring"`
-    ];
-
-    const found: any[] = [];
+    const oldUrl = "https://bqfksdoevseeknyiglur.supabase.co/functions/v1/search-candidates";
+    const oldAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxZmtzZG9ldnNlZWtueWlnbHVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MDQ0NDEsImV4cCI6MjA5MDQ4MDQ0MX0.40mAdlNjKTp5ydyYvR6icObQENOosKM26dKyplzxkWA";
     
     try {
-      const fetchPromises = queries.map(async (query, qIndex) => {
-        // Use corsproxy.io to bypass CORS
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://html.duckduckgo.com/html/?q=${query}`)}`;
-        
-        const response = await fetch(proxyUrl, {
-          headers: {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-          }
-        });
-        
-        if (!response.ok) return;
-        
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const results = doc.querySelectorAll(".result");
-        
-        results.forEach((el, index) => {
-          const titleEl = el.querySelector(".result__a");
-          const snippetEl = el.querySelector(".result__snippet");
-          if (!titleEl) return;
-          
-          let url = titleEl.getAttribute("href") || "";
-          if (url.includes("uddg=")) {
-            const parts = url.split("uddg=");
-            if (parts[1]) {
-              url = decodeURIComponent(parts[1].split("&")[0]);
-            }
-          }
-          
-          const rawTitle = (titleEl.textContent || "").trim();
-          const rawSnippet = snippetEl ? (snippetEl.textContent || "").trim() : "";
-          
-          if (rawTitle.toLowerCase().includes("lediga jobb") || rawTitle.toLowerCase().includes("rekrytering") || rawTitle.toLowerCase().includes("careers")) {
-            return;
-          }
-          
-          let name = "";
-          let role = "";
-          let company = "";
-          
-          const titleClean = rawTitle.replace(/\s*\|\s*LinkedIn/i, "").replace(/\s*-\s*LinkedIn/i, "");
-          const parts = titleClean.split(/\s+-\s+|\s+\|\s+/);
-          
-          if (parts.length >= 1) {
-            name = parts[0].trim();
-            if (name.toLowerCase().includes("profil") || name.toLowerCase().includes("katalog") || name.toLowerCase().includes("directory")) {
-              return;
-            }
-          }
-          
-          if (parts.length >= 2) {
-            role = parts[1].trim();
-          }
-          
-          if (parts.length >= 3) {
-            company = parts[2].trim();
-          }
-          
-          if (!role && rawSnippet) {
-            const roleMatch = /(?:jobbar som|arbetar som|is a|works as)\s+([^,.]+)/i.exec(rawSnippet);
-            if (roleMatch) {
-              role = roleMatch[1].trim();
-            }
-          }
-          
-          let location = loc || "Sverige";
-          const locMatch = /(Västerås|Stockholm|Göteborg|Malmö|Umeå|Luleå|Sundsvall|Örebro|Linköping|Norrköping|Jönköping|Sverige)/i.exec(titleClean + " " + rawSnippet);
-          if (locMatch) {
-            location = locMatch[1];
-          }
-          
-          const foundSkills: string[] = [];
-          const keywords = ["elkraft", "elnät", "cad", "högspänning", "beredning", "projektering", "station", "transmission", "distribution", "kraftledning", "luftledning", "markkabel", "reläskydd"];
-          for (const kw of keywords) {
-            if (new RegExp(`\\b${kw}\\b`, "i").test(rawSnippet + " " + titleClean)) {
-              foundSkills.push(kw.charAt(0).toUpperCase() + kw.slice(1));
-            }
-          }
-          
-          if (name && name.split(" ").length >= 2) {
-            found.push({
-              id: `web-free-${qIndex}-${index}-${Date.now()}`,
-              name,
-              current_role: role || "Kompetens inom elnät / elkraft",
-              company: company || (url.includes("linkedin.com") ? "LinkedIn-profil" : "Externa källor"),
-              years_of_experience: 3,
-              skills: foundSkills.length > 0 ? foundSkills : ["Elkraft", "Elnät"],
-              location,
-              linkedin_url: url.includes("linkedin.com") ? url : "",
-              email: "Klicka för att hämta",
-              phone: "Klicka för att hämta",
-              avatar_url: "",
-              profile_image_url: "",
-              summary: rawSnippet,
-              sourceCategory: url.includes("linkedin.com") ? "LinkedIn" : "RocketReach"
-            });
-          }
-        });
+      const res = await fetch(oldUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": oldAnonKey,
+          "Authorization": `Bearer ${oldAnonKey}`
+        },
+        body: JSON.stringify({
+          requirements: reqs,
+          query: reqs.jobTitles?.[0] || ""
+        })
       });
-      
-      await Promise.all(fetchPromises);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.candidates) {
+          return data.candidates.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            current_role: c.currentRole || c.current_role || "Kompetens inom elnät / elkraft",
+            company: c.company || "Okänt bolag",
+            years_of_experience: Number(c.yearsOfExperience || c.years_of_experience || 3),
+            skills: c.skills || [],
+            location: c.location || "Sverige",
+            linkedin_url: c.linkedin || c.linkedin_url || "",
+            email: c.email || "Not available",
+            phone: c.phone || "Not available",
+            avatar_url: c.avatarUrl || "",
+            profile_image_url: c.profileImageUrl || "",
+            summary: c.summary || "",
+            source: c.source || "Web",
+            sourceCategory: c.sourceCategory || (c.linkedin?.includes("linkedin.com") ? "LinkedIn" : "Öppen webb")
+          }));
+        }
+      }
     } catch (err) {
       console.error("Free web search failed:", err);
     }
     
-    return found;
+    return [];
   };
 
   // Save candidate from free web search into Supabase DB + local fallback
