@@ -9,7 +9,7 @@ import { applyFilters } from "@/lib/candidateFilters";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 
 const supabase = supabaseClient as any;
-import { Search, Loader2, AlertCircle, Download, BookmarkPlus, BookmarkCheck, Trash2, ShieldCheck, ExternalLink, Save, History, FileText, Lock, Mail as MailIcon, LogOut, Check, ArrowRight, User, Plus, Upload, X } from "lucide-react";
+import { Search, Loader2, AlertCircle, Download, BookmarkPlus, BookmarkCheck, Trash2, ShieldCheck, ExternalLink, Save, History, FileText, Lock, Mail as MailIcon, LogOut, Check, ArrowRight, User, Plus, Upload, X, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
 
@@ -459,6 +459,70 @@ export default function Index() {
   const [recruiterName, setRecruiterName] = useState(localStorage.getItem("nektab-recruiter-name") || "");
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [hoveredRequirementSkill, setHoveredRequirementSkill] = useState<string | null>(null);
+  const [showDatabaseOnly, setShowDatabaseOnly] = useState(false);
+  const [databaseCandidates, setDatabaseCandidates] = useState<ScoredCandidate[]>([]);
+  const [isLoadingDatabase, setIsLoadingDatabase] = useState(false);
+
+  const fetchDatabaseCandidates = async (): Promise<ScoredCandidate[]> => {
+    let rawCands: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("candidates")
+        .select("*");
+      
+      if (!error && data) {
+        rawCands = data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          currentRole: c.current_role || "Unknown role",
+          company: c.company || "Unknown company",
+          yearsOfExperience: Number(c.years_of_experience || 3),
+          skills: c.skills || [],
+          location: c.location || "Sverige",
+          linkedin: c.linkedin_url || "",
+          email: c.email || "Not available",
+          phone: c.phone || "Not available",
+          avatarUrl: c.avatar_url || "",
+          profileImageUrl: c.profile_image_url || "",
+          summary: "",
+          source: c.linkedin_url || "Intern databas",
+          sourceCategory: "Intern databas" as any,
+          evidenceSnippets: [],
+          networkSignals: []
+        }));
+      } else {
+        throw new Error("Supabase error or empty");
+      }
+    } catch (dbErr) {
+      rawCands = readLocalCandidates();
+    }
+
+    const activeReqs = requirements || {
+      seniorityLevel: "mid",
+      yearsOfExperience: null,
+      keySkills: [],
+      industries: [],
+      jobTitles: [],
+      targetCompanies: [],
+      location: null
+    };
+
+    return rankCandidates(rawCands, activeReqs);
+  };
+
+  const handleToggleDatabase = async () => {
+    if (!showDatabaseOnly) {
+      setIsLoadingDatabase(true);
+      const cands = await fetchDatabaseCandidates();
+      setDatabaseCandidates(cands);
+      setShowDatabaseOnly(true);
+      setShowShortlistOnly(false);
+      setIsLoadingDatabase(false);
+    } else {
+      setShowDatabaseOnly(false);
+    }
+    setSelectedCandidateIds(new Set());
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -578,12 +642,14 @@ export default function Index() {
     if (storedTemplates) setRoleTemplates(JSON.parse(storedTemplates));
   }, []);
 
-  const candidatePool = showShortlistOnly ? shortlist : webResults;
+  const candidatePool = showDatabaseOnly 
+    ? databaseCandidates 
+    : (showShortlistOnly ? shortlist : webResults);
   const allSkills = useMemo(() => {
     const skills = new Set<string>();
-    [...webResults, ...shortlist].forEach((c) => c.skills?.forEach((s: string) => skills.add(s)));
+    [...webResults, ...shortlist, ...databaseCandidates].forEach((c) => c.skills?.forEach((s: string) => skills.add(s)));
     return Array.from(skills).sort();
-  }, [webResults, shortlist]);
+  }, [webResults, shortlist, databaseCandidates]);
 
   const filteredWebResults = useMemo(() => applyFilters(candidatePool, filters), [candidatePool, filters]);
   const selectedCandidates = useMemo(
@@ -592,7 +658,7 @@ export default function Index() {
   );
   const allVisibleSelected =
     filteredWebResults.length > 0 && filteredWebResults.every((candidate) => selectedCandidateIds.has(candidateId(candidate)));
-  const showSidePanel = Boolean(requirements || webResults.length > 0 || shortlist.length > 0);
+  const showSidePanel = Boolean(requirements || webResults.length > 0 || shortlist.length > 0 || showDatabaseOnly);
   const comparedCandidates = selectedCandidates.slice(0, 4);
   const enrichedJobDescription = [jobDescription, profileText(managerProfile)].filter(Boolean).join("\n\nChefens kravprofil\n");
 
@@ -1175,7 +1241,10 @@ ${recruiterName || "NEKTAB"}`;
     setNewCandPhone("");
     setShowAddForm(false);
     
-    if (requirements) {
+    if (showDatabaseOnly) {
+      const cands = await fetchDatabaseCandidates();
+      setDatabaseCandidates(cands);
+    } else if (requirements) {
       await searchRealCandidates(requirements);
     }
   };
@@ -1282,7 +1351,10 @@ ${recruiterName || "NEKTAB"}`;
         saveLocalCandidates([...importedList, ...currentLocal]);
         toast({ title: `Bulkimporterade ${count} kandidater till poolen!` });
         
-        if (requirements) {
+        if (showDatabaseOnly) {
+          const cands = await fetchDatabaseCandidates();
+          setDatabaseCandidates(cands);
+        } else if (requirements) {
           await searchRealCandidates(requirements);
         }
       } catch (err: any) {
@@ -1668,6 +1740,18 @@ ${recruiterName || "NEKTAB"}`;
                     <Upload className="h-4 w-4" /> Bulkimportera CSV
                   </label>
                 </div>
+                <Button 
+                  onClick={handleToggleDatabase} 
+                  disabled={isLoadingDatabase}
+                  className="inline-flex h-11 items-center justify-center border border-primary px-5 text-sm font-bold text-foreground bg-transparent hover:bg-primary/10 transition-all gap-2 rounded-none"
+                >
+                  {isLoadingDatabase ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  ) : (
+                    <Database className="h-4 w-4 text-primary" />
+                  )}
+                  {showDatabaseOnly ? "Dölj intern databas" : "Visa sparade i databasen"}
+                </Button>
               </div>
 
               {showAddForm && (
@@ -1869,7 +1953,7 @@ ${recruiterName || "NEKTAB"}`;
           </div>
         </section>
 
-        {(requirements || webResults.length > 0 || shortlist.length > 0 || searchError) && (
+        {(requirements || webResults.length > 0 || shortlist.length > 0 || showDatabaseOnly || searchError) && (
           <section className="site-section relative -mt-10 bg-[#f5f5f2] pt-20 pb-20">
             <div className={`container grid gap-7 ${showSidePanel ? "lg:grid-cols-[330px_minmax(0,1fr)]" : "lg:grid-cols-1"}`}>
               {showSidePanel && (
@@ -1892,10 +1976,27 @@ ${recruiterName || "NEKTAB"}`;
                   <div>
                     <p className="brand-kicker text-primary uppercase text-xs font-bold tracking-wider">Matchade träffar</p>
                     <h2 className="text-2xl font-bold">
-                      {showShortlistOnly ? "Kortlista" : "Kandidater"} ({filteredWebResults.length})
+                      {showDatabaseOnly 
+                        ? "Sparade i databasen" 
+                        : (showShortlistOnly ? "Kortlista" : "Kandidater")} ({filteredWebResults.length})
                     </h2>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleToggleDatabase}
+                      disabled={isLoadingDatabase}
+                      className="rounded-full border-primary text-foreground font-bold normal-case h-9"
+                    >
+                      {isLoadingDatabase ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      ) : (
+                        <Database className="h-4 w-4 text-primary" />
+                      )}
+                      {showDatabaseOnly ? "Visa sökresultat" : "Visa intern databas"}
+                    </Button>
                     {shortlist.length > 0 && (
                       <Button
                         type="button"
@@ -1903,6 +2004,7 @@ ${recruiterName || "NEKTAB"}`;
                         size="sm"
                         onClick={() => {
                           setShowShortlistOnly(!showShortlistOnly);
+                          setShowDatabaseOnly(false);
                           setSelectedCandidateIds(new Set());
                         }}
                         className="rounded-full border-primary text-foreground font-bold normal-case h-9"
@@ -2017,7 +2119,7 @@ ${recruiterName || "NEKTAB"}`;
                 {requirements && filteredWebResults.length > 0 && renderXRaySearchPanel(requirements, true)}
 
                 {/* Sökstatistik / Analytics summary cards */}
-                {filteredWebResults.length > 0 && (
+                {requirements && filteredWebResults.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
                     <Card className="bg-white border border-border rounded-none shadow-sm">
                       <CardContent className="p-4">
