@@ -36,6 +36,17 @@ function normalizeLinkedInUrl(value?: string): string | null {
   return `https://${trimmed.replace(/^\/+/, "")}`;
 }
 
+function getOutreachMessage(candidate: ScoredCandidate, recruiterName: string): string {
+  return `Hej ${candidate.name.split(" ")[0]},
+
+Jag hittade din profil när vi på NEKTAB letade efter kompetens inom ${candidate.matchedSkills.slice(0, 3).join(", ") || candidate.currentRole}.
+
+Din bakgrund som ${candidate.currentRole} på ${candidate.company} ser relevant ut för ett uppdrag hos oss. Vore du öppen för en kort kontakt för att höra mer?
+
+Vänliga hälsningar,
+${recruiterName || "NEKTAB"}`;
+}
+
 interface CandidateCardProps {
   candidate: ScoredCandidate;
   rank: number;
@@ -44,6 +55,7 @@ interface CandidateCardProps {
   pipelineStatus?: string;
   feedback?: string;
   note?: string;
+  recruiterName?: string;
   onPipelineChange?: (status: PipelineStatus) => void;
   onFeedbackChange?: (feedback: FeedbackTag) => void;
   onNoteChange?: (note: string) => void;
@@ -61,6 +73,7 @@ export function CandidateCard({
   pipelineStatus = "Ny",
   feedback,
   note = "",
+  recruiterName = "",
   onPipelineChange,
   onFeedbackChange,
   onNoteChange,
@@ -69,6 +82,7 @@ export function CandidateCard({
   onSelectedChange,
   onSaveToDb,
 }: CandidateCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [contactExpanded, setContactExpanded] = useState(false);
   const [scoreExpanded, setScoreExpanded] = useState(false);
   const linkedInUrl = normalizeLinkedInUrl(candidate.linkedin);
@@ -150,52 +164,70 @@ export function CandidateCard({
               </span>
             </div>
 
-            <div className="border-l-4 border-primary bg-primary/5 p-3 text-sm font-bold text-foreground">
-              {candidate.decisionSummary}
-            </div>
-
-            <div className="grid gap-2 border border-border bg-[#fafafa] p-3 text-xs md:grid-cols-2">
-              <div>
-                <p className="font-bold text-foreground">Starkast signal</p>
-                <p className="mt-1 text-muted-foreground">
-                  {strongestMatches.length > 0 ? strongestMatches.join(", ") : "Ingen tydlig kravmatch ännu"}
-                </p>
-              </div>
-              <div>
-                <p className="font-bold text-foreground">Att kontrollera</p>
-                <p className="mt-1 text-muted-foreground">
-                  {mainGaps.length > 0 ? mainGaps.join(", ") : "Inga uppenbara kravluckor"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 text-xs">
+            <div className="flex flex-wrap gap-2 text-xs pt-1">
               {linkedInUrl ? (
-                <a href={linkedInUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 border border-primary px-2 py-1 font-bold text-foreground hover:bg-primary/20">
-                  <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                <a href={linkedInUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 border border-primary px-2.5 py-1 font-bold text-foreground hover:bg-primary/20">
+                  <Linkedin className="h-3.5 w-3.5 text-[#0A66C2]" /> LinkedIn
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-1 border border-border px-2 py-1 text-muted-foreground">
-                  <Linkedin className="h-3.5 w-3.5" /> LinkedIn saknas
-                </span>
+                <div className="inline-flex items-center gap-1 text-muted-foreground text-xs">
+                  <span className="flex items-center gap-1 border border-border px-2.5 py-1 bg-[#fafafa]">
+                    <Linkedin className="h-3.5 w-3.5" /> LinkedIn saknas
+                  </span>
+                  <a 
+                    href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${candidate.name} ${candidate.company}`)}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center justify-center p-1 border border-primary text-foreground hover:bg-primary/20 hover:text-primary transition-all h-[26px] w-[26px]"
+                    title="Sök efter kandidat på LinkedIn"
+                  >
+                    <Search className="h-3 w-3" />
+                  </a>
+                </div>
               )}
               {isAvailable(candidate.email) ? (
-                <a href={`mailto:${candidate.email}`} className="inline-flex items-center gap-1 border border-primary px-2 py-1 font-bold text-foreground hover:bg-primary/20">
-                  <Mail className="h-3.5 w-3.5" /> {candidate.email}
+                <a 
+                  href={`mailto:${candidate.email}?subject=${encodeURIComponent("Karriärsmöjlighet hos NEKTAB")}&body=${encodeURIComponent(getOutreachMessage(candidate, recruiterName))}`} 
+                  className="inline-flex items-center gap-1.5 border border-primary px-2.5 py-1 font-bold text-foreground hover:bg-primary/20"
+                  title="Mejla kandidat direkt med mall"
+                >
+                  <Mail className="h-3.5 w-3.5 text-[#EA4335]" /> {candidate.email}
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-1 border border-border px-2 py-1 text-muted-foreground">
-                  <Mail className="h-3.5 w-3.5" /> E-post saknas
-                </span>
+                <div className="inline-flex items-center gap-1 text-muted-foreground text-xs">
+                  <span className="flex items-center gap-1 border border-border px-2.5 py-1 bg-[#fafafa]">
+                    <Mail className="h-3.5 w-3.5" /> E-post saknas
+                  </span>
+                  <a 
+                    href={`https://www.google.com/search?q=${encodeURIComponent(`"${candidate.name}" "${candidate.company}" email OR epost`)}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center justify-center p-1 border border-primary text-foreground hover:bg-primary/20 hover:text-primary transition-all h-[26px] w-[26px]"
+                    title="Sök efter e-post på Google"
+                  >
+                    <Search className="h-3 w-3" />
+                  </a>
+                </div>
               )}
               {isAvailable(candidate.phone) ? (
-                <a href={`tel:${candidate.phone}`} className="inline-flex items-center gap-1 border border-primary px-2 py-1 font-bold text-foreground hover:bg-primary/20">
-                  <Phone className="h-3.5 w-3.5" /> {candidate.phone}
+                <a href={`tel:${candidate.phone}`} className="inline-flex items-center gap-1.5 border border-primary px-2.5 py-1 font-bold text-foreground hover:bg-primary/20">
+                  <Phone className="h-3.5 w-3.5 text-[#34A853]" /> {candidate.phone}
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-1 border border-border px-2 py-1 text-muted-foreground">
-                  <Phone className="h-3.5 w-3.5" /> Telefon saknas
-                </span>
+                <div className="inline-flex items-center gap-1 text-muted-foreground text-xs">
+                  <span className="flex items-center gap-1 border border-border px-2.5 py-1 bg-[#fafafa]">
+                    <Phone className="h-3.5 w-3.5" /> Telefon saknas
+                  </span>
+                  <a 
+                    href={`https://www.google.com/search?q=${encodeURIComponent(`"${candidate.name}" "${candidate.company}" telefon OR mobil OR nummer OR phone`)}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center justify-center p-1 border border-primary text-foreground hover:bg-primary/20 hover:text-primary transition-all h-[26px] w-[26px]"
+                    title="Sök efter telefonnummer på Google"
+                  >
+                    <Search className="h-3 w-3" />
+                  </a>
+                </div>
               )}
             </div>
 
@@ -207,255 +239,265 @@ export function CandidateCard({
                   </Badge>
                 ))}
                 {feedback && (
-                  <Badge variant="outline" className="rounded-none text-xs font-bold">
+                  <Badge variant="outline" className="rounded-none text-xs font-bold bg-[#fafafa]">
                     Feedback: {feedback}
                   </Badge>
                 )}
               </div>
             )}
 
-            <div className="grid gap-2 md:grid-cols-[180px_1fr_auto] md:items-center">
-              <select
-                value={pipelineStatus}
-                onChange={(event) => onPipelineChange?.(event.target.value as PipelineStatus)}
-                className="h-9 border border-border bg-white px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
-              >
-                {PIPELINE_STATUSES.map((status) => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-              <select
-                value={feedback || ""}
-                onChange={(event) => {
-                  if (event.target.value) {
-                    onFeedbackChange?.(event.target.value as FeedbackTag);
-                  }
-                }}
-                className="h-9 border border-border bg-white px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
-              >
-                <option value="">Feedback</option>
-                {FEEDBACK_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-              <Button type="button" variant="outline" size="sm" onClick={onCopyOutreach} className="h-9 gap-1 rounded-full border-primary text-xs font-bold">
-                <Copy className="h-3.5 w-3.5" /> Kopiera meddelande
-              </Button>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <a
-                href={publicSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-9 items-center gap-1 rounded-full border border-primary px-3 text-xs font-bold text-foreground hover:bg-primary/20"
-              >
-                <Search className="h-3.5 w-3.5" /> Sök LinkedIn/Google
-              </a>
-              <Button type="button" variant="outline" size="sm" onClick={onEnrich} className="h-9 gap-1 rounded-full border-primary text-xs font-bold">
-                <Sparkles className="h-3.5 w-3.5" /> Berika kontakt
-              </Button>
-              {onSaveToDb && candidate.sourceCategory !== "Intern databas" && (
-                <Button type="button" variant="default" size="sm" onClick={onSaveToDb} className="h-9 gap-1 rounded-full bg-primary text-black hover:bg-primary/95 text-xs font-bold">
-                  <Database className="h-3.5 w-3.5" /> Spara i databas
-                </Button>
-              )}
-            </div>
-
-            <textarea
-              value={note}
-              onChange={(event) => onNoteChange?.(event.target.value)}
-              placeholder="Chefens anteckning, t.ex. Ring efter semester eller intressant för Göteborg..."
-              className="min-h-20 w-full border border-border bg-white p-3 text-xs text-foreground outline-none focus:border-primary"
-            />
-
-            <div className="flex flex-wrap gap-1.5">
-              {candidate.skills.map((skill) => (
-                <Badge key={skill} variant="secondary" className="rounded-none border-0 bg-secondary px-2 text-xs font-bold">
-                  {skill}
-                </Badge>
-              ))}
-            </div>
-
-            <p className="text-sm leading-relaxed text-muted-foreground">{candidate.explanation}</p>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="border border-primary/20 bg-primary/5 p-3">
-                <p className="brand-kicker text-primary">Matchade krav</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {candidate.matchedSkills.length > 0 ? (
-                    candidate.matchedSkills.map((skill) => (
-                      <Badge key={skill} className="rounded-none border-0 bg-secondary text-xs font-bold text-foreground">
-                        {skill}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Inga tydliga kompetenskrav matchade.</span>
-                  )}
-                </div>
-              </div>
-              <div className="border border-border bg-[#fafafa] p-3">
-                <p className="brand-kicker text-muted-foreground">Saknade krav</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {candidate.missingSkills.length > 0 ? (
-                    candidate.missingSkills.map((skill) => (
-                      <Badge key={skill} variant="outline" className="rounded-none text-xs font-bold">
-                        {skill}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Inga saknade krav i kompetensdelen.</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {!compact && candidate.skillEvidence.length > 0 && (
-              <div className="border border-border bg-white p-3">
-                <p className="brand-kicker text-primary">Var matchningen hittades</p>
-                <div className="mt-2 grid gap-2 text-xs text-muted-foreground">
-                  {candidate.skillEvidence.map((item) => (
-                    <div key={`${item.skill}-${item.source}-${item.value}`} className="border border-border bg-[#fafafa] p-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="max-w-full break-words font-bold text-foreground">{item.skill}</span>
-                        <span className="shrink-0 bg-primary/15 px-2 py-0.5 font-bold uppercase tracking-[0.04em] text-foreground">
-                          {item.source}
-                        </span>
-                      </div>
-                      <p className="mt-1 break-words text-muted-foreground">{item.value}</p>
-                    </div>
+            <div className="flex flex-wrap gap-2 items-center justify-between pt-1 border-t border-dashed border-border mt-3">
+              <div className="flex flex-wrap gap-2 items-center">
+                <select
+                  value={pipelineStatus}
+                  onChange={(event) => onPipelineChange?.(event.target.value as PipelineStatus)}
+                  className="h-9 border border-border bg-white px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
+                >
+                  {PIPELINE_STATUSES.map((status) => (
+                    <option key={status} value={status}>{status}</option>
                   ))}
+                </select>
+                <select
+                  value={feedback || ""}
+                  onChange={(event) => {
+                    if (event.target.value) {
+                      onFeedbackChange?.(event.target.value as FeedbackTag);
+                    }
+                  }}
+                  className="h-9 border border-border bg-white px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
+                >
+                  <option value="">Feedback</option>
+                  {FEEDBACK_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={onCopyOutreach} className="h-9 gap-1 rounded-full border-primary text-xs font-bold bg-[#fafafa]">
+                  <Copy className="h-3.5 w-3.5" /> Kopiera meddelande
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsExpanded(!isExpanded)} 
+                  className="h-9 gap-1 text-xs font-bold text-primary hover:text-primary/80"
+                >
+                  {isExpanded ? (
+                    <><ChevronUp className="h-4 w-4" /> Dölj analys</>
+                  ) : (
+                    <><ChevronDown className="h-4 w-4" /> Visa analys & anteckningar</>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {isExpanded && (
+              <div className="space-y-4 pt-4 border-t border-border mt-3 animate-fade-in">
+                <div className="border-l-4 border-primary bg-primary/5 p-3 text-sm font-bold text-foreground">
+                  {candidate.decisionSummary}
                 </div>
-              </div>
-            )}
 
-            {!compact && (networkSignals.length > 0 || evidenceSnippets.length > 0) && (
-              <div className="grid gap-3 md:grid-cols-2">
-                {networkSignals.length > 0 && (
-                  <div className="border border-primary/20 bg-primary/5 p-3">
-                    <p className="brand-kicker flex items-center gap-1.5 text-primary">
-                      <Network className="h-3.5 w-3.5" />
-                      Nätverkssignaler
+                <div className="grid gap-2 border border-border bg-[#fafafa] p-3 text-xs md:grid-cols-2">
+                  <div>
+                    <p className="font-bold text-foreground">Starkast signal</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {strongestMatches.length > 0 ? strongestMatches.join(", ") : "Ingen tydlig kravmatch ännu"}
                     </p>
-                    <div className="mt-2 space-y-2 text-xs text-muted-foreground">
-                      {networkSignals.map((signal) => (
-                        <div key={`${signal.label}-${signal.reason}`} className="border border-primary/20 bg-white p-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-bold text-foreground">{signal.label}</span>
-                            <span className="bg-primary/15 px-2 py-0.5 font-bold text-foreground">{signal.strength}</span>
-                          </div>
-                          <p className="mt-1">{signal.reason}</p>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                )}
-
-                {evidenceSnippets.length > 0 && (
-                  <div className="border border-border bg-[#fafafa] p-3">
-                    <p className="brand-kicker flex items-center gap-1.5 text-muted-foreground">
-                      <FileSearch className="h-3.5 w-3.5" />
-                      Källutdrag
+                  <div>
+                    <p className="font-bold text-foreground">Att kontrollera</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {mainGaps.length > 0 ? mainGaps.join(", ") : "Inga uppenbara kravluckor"}
                     </p>
-                    <div className="mt-2 space-y-2 text-xs text-muted-foreground">
-                      {evidenceSnippets.slice(0, 3).map((snippet) => (
-                        <p key={snippet} className="border border-border bg-white p-2">"{snippet}"</p>
-                      ))}
-                    </div>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
 
-            {!compact && (
-              <div className="border border-border bg-[#fafafa] p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="brand-kicker text-primary">Poängfördelning</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setScoreExpanded(!scoreExpanded)}
-                    className="h-7 gap-1 px-2 text-xs font-bold text-muted-foreground"
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={publicSearchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-9 items-center gap-1 rounded-full border border-primary px-3 text-xs font-bold text-foreground hover:bg-primary/20"
                   >
-                    {candidate.scoreBreakdown.reduce((sum, item) => sum + item.weightedScore, 0)} / 100
-                    {scoreExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    <Search className="h-3.5 w-3.5" /> Sök LinkedIn/Google
+                  </a>
+                  <Button type="button" variant="outline" size="sm" onClick={onEnrich} className="h-9 gap-1 rounded-full border-primary text-xs font-bold">
+                    <Sparkles className="h-3.5 w-3.5" /> Berika kontakt
+                  </Button>
+                  {onSaveToDb && candidate.sourceCategory !== "Intern databas" && (
+                    <Button type="button" variant="default" size="sm" onClick={onSaveToDb} className="h-9 gap-1 rounded-full bg-primary text-black hover:bg-primary/95 text-xs font-bold">
+                      <Database className="h-3.5 w-3.5" /> Spara i databas
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadCandidatePdf(candidate)}
+                    className="h-9 gap-1 rounded-full border-primary px-3 text-xs font-bold text-foreground"
+                  >
+                    <Download className="h-3 w-3" />
+                    Ladda ner PDF
                   </Button>
                 </div>
-                {scoreExpanded && (
-                  <div className="mt-2 space-y-2">
-                    {candidate.scoreBreakdown.map((item) => (
-                      <div key={item.label} className="grid gap-2 text-xs sm:grid-cols-[120px_1fr_92px] sm:items-center">
-                        <div className="font-bold text-foreground">{item.label}</div>
-                        <div className="min-w-0">
-                          <div className="h-2 overflow-hidden bg-white">
-                            <div
-                              className="h-full bg-primary"
-                              style={{ width: `${Math.min(100, Math.max(0, item.rawScore))}%` }}
-                            />
-                          </div>
-                          <p className="mt-1 break-words text-muted-foreground">{item.reason}</p>
-                        </div>
-                        <div className="font-mono font-bold text-foreground sm:text-right">
-                          {item.weightedScore} p
-                          <span className="block font-sans font-normal text-muted-foreground">
-                            {item.rawScore}/100 x {item.weight}%
-                          </span>
-                        </div>
-                      </div>
+
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-foreground">Chefens anteckningar</p>
+                  <textarea
+                    value={note}
+                    onChange={(event) => onNoteChange?.(event.target.value)}
+                    placeholder="Chefens anteckning, t.ex. Ring efter semester eller intressant för Göteborg..."
+                    className="min-h-20 w-full border border-border bg-white p-3 text-xs text-foreground outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-foreground">Kompetenser</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {candidate.skills.map((skill) => (
+                      <Badge key={skill} variant="secondary" className="rounded-none border-0 bg-secondary px-2 py-0.5 text-xs font-bold">
+                        {skill}
+                      </Badge>
                     ))}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
 
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setContactExpanded(!contactExpanded)}
-                className="h-7 gap-1 px-2 text-xs font-bold text-muted-foreground"
-              >
-                {contactExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                Kontaktuppgifter
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => downloadCandidatePdf(candidate)}
-                className="h-7 gap-1 rounded-full border-primary px-3 text-xs font-bold text-foreground"
-              >
-                <Download className="h-3 w-3" />
-                Ladda ner PDF
-              </Button>
-            </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">{candidate.explanation}</p>
 
-            {contactExpanded && (
-              <div className="space-y-1.5 border-l-4 border-primary bg-muted/50 p-3 text-sm">
-                {isAvailable(candidate.email) && (
-                  <a href={`mailto:${candidate.email}`} className="flex items-center gap-2 text-foreground transition-colors hover:text-primary">
-                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                    {candidate.email}
-                  </a>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="border border-primary/20 bg-primary/5 p-3">
+                    <p className="brand-kicker text-primary">Matchade krav</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {candidate.matchedSkills.length > 0 ? (
+                        candidate.matchedSkills.map((skill) => (
+                          <Badge key={skill} className="rounded-none border-0 bg-secondary text-xs font-bold text-foreground">
+                            {skill}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Inga tydliga kompetenskrav matchade.</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="border border-border bg-[#fafafa] p-3">
+                    <p className="brand-kicker text-muted-foreground">Saknade krav</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {candidate.missingSkills.length > 0 ? (
+                        candidate.missingSkills.map((skill) => (
+                          <Badge key={skill} variant="outline" className="rounded-none text-xs font-bold">
+                            {skill}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Inga saknade krav i kompetensdelen.</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {!compact && candidate.skillEvidence.length > 0 && (
+                  <div className="border border-border bg-white p-3">
+                    <p className="brand-kicker text-primary">Var matchningen hittades</p>
+                    <div className="mt-2 grid gap-2 text-xs text-muted-foreground">
+                      {candidate.skillEvidence.map((item) => (
+                        <div key={`${item.skill}-${item.source}-${item.value}`} className="border border-border bg-[#fafafa] p-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="max-w-full break-words font-bold text-foreground">{item.skill}</span>
+                            <span className="shrink-0 bg-primary/15 px-2 py-0.5 font-bold uppercase tracking-[0.04em] text-foreground">
+                              {item.source}
+                            </span>
+                          </div>
+                          <p className="mt-1 break-words text-muted-foreground">{item.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-                {isAvailable(candidate.phone) && (
-                  <a href={`tel:${candidate.phone}`} className="flex items-center gap-2 text-foreground transition-colors hover:text-primary">
-                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                    {candidate.phone}
-                  </a>
+
+                {!compact && (networkSignals.length > 0 || evidenceSnippets.length > 0) && (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {networkSignals.length > 0 && (
+                      <div className="border border-primary/20 bg-primary/5 p-3">
+                        <p className="brand-kicker flex items-center gap-1.5 text-primary">
+                          <Network className="h-3.5 w-3.5" />
+                          Nätverkssignaler
+                        </p>
+                        <div className="mt-2 space-y-2 text-xs text-muted-foreground">
+                          {networkSignals.map((signal) => (
+                            <div key={`${signal.label}-${signal.reason}`} className="border border-primary/20 bg-white p-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-bold text-foreground">{signal.label}</span>
+                                <span className="bg-primary/15 px-2 py-0.5 font-bold text-foreground">{signal.strength}</span>
+                              </div>
+                              <p className="mt-1">{signal.reason}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {evidenceSnippets.length > 0 && (
+                      <div className="border border-border bg-[#fafafa] p-3">
+                        <p className="brand-kicker flex items-center gap-1.5 text-muted-foreground">
+                          <FileSearch className="h-3.5 w-3.5" />
+                          Källutdrag
+                        </p>
+                        <div className="mt-2 space-y-2 text-xs text-muted-foreground">
+                          {evidenceSnippets.slice(0, 3).map((snippet) => (
+                            <p key={snippet} className="border border-border bg-white p-2">"{snippet}"</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
-                {linkedInUrl && (
-                  <a href={linkedInUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-foreground transition-colors hover:text-primary">
-                    <Linkedin className="h-3.5 w-3.5 text-muted-foreground" />
-                    {candidate.linkedin}
-                  </a>
+
+                {!compact && (
+                  <div className="border border-border bg-[#fafafa] p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="brand-kicker text-primary">Poängfördelning</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setScoreExpanded(!scoreExpanded)}
+                        className="h-7 gap-1 px-2 text-xs font-bold text-muted-foreground"
+                      >
+                        {candidate.scoreBreakdown.reduce((sum, item) => sum + item.weightedScore, 0)} / 100
+                        {scoreExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      </Button>
+                    </div>
+                    {scoreExpanded && (
+                      <div className="mt-2 space-y-2">
+                        {candidate.scoreBreakdown.map((item) => (
+                          <div key={item.label} className="grid gap-2 text-xs sm:grid-cols-[120px_1fr_92px] sm:items-center">
+                            <div className="font-bold text-foreground">{item.label}</div>
+                            <div className="min-w-0">
+                              <div className="h-2 overflow-hidden bg-white">
+                                <div
+                                  className="h-full bg-primary"
+                                  style={{ width: `${Math.min(100, Math.max(0, item.rawScore))}%` }}
+                                />
+                              </div>
+                              <p className="mt-1 break-words text-muted-foreground">{item.reason}</p>
+                            </div>
+                            <div className="font-mono font-bold text-foreground sm:text-right">
+                              {item.weightedScore} p
+                              <span className="block font-sans font-normal text-muted-foreground">
+                                {item.rawScore}/100 x {item.weight}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
-                {!isAvailable(candidate.email) && !isAvailable(candidate.phone) && !linkedInUrl && (
-                  <p className="text-muted-foreground">Inga kontaktuppgifter hittades.</p>
-                )}
-                <p className="pt-2 text-xs text-muted-foreground">
+
+                <div className="border-l-4 border-primary bg-muted/50 p-3 text-xs text-muted-foreground">
                   Datakvalitet {candidate.dataConfidence.score}/100: {candidate.dataConfidence.reasons.join(", ")}.
-                </p>
+                </div>
               </div>
             )}
           </div>

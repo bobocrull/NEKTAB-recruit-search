@@ -456,6 +456,58 @@ export default function Index() {
 
   const { toast } = useToast();
 
+  const [recruiterName, setRecruiterName] = useState(localStorage.getItem("nektab-recruiter-name") || "");
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDraggingFile(false);
+  };
+
+  const processFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        setJobDescription(text);
+        toast({ title: "Annons inladdad", description: `Läste in ${file.name} framgångsrikt.` });
+      }
+    };
+    reader.onerror = () => {
+      toast({ title: "Filfel", description: "Det gick inte att läsa filen.", variant: "destructive" });
+    };
+
+    if (file.name.endsWith(".txt") || file.name.endsWith(".md") || file.name.endsWith(".rtf") || file.name.endsWith(".json") || file.type.startsWith("text/")) {
+      reader.readAsText(file);
+    } else {
+      toast({
+        title: "Filformat stöds ej direkt",
+        description: "För PDF eller Word-dokument, vänligen klistra in texten manuellt för bästa resultat.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
   // 1. Session and auth listeners
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1039,8 +1091,8 @@ Jag hittade din profil när vi på NEKTAB letade efter kompetens inom ${candidat
 
 Din bakgrund som ${candidate.currentRole} på ${candidate.company} ser relevant ut för ett uppdrag hos oss. Vore du öppen för en kort kontakt för att höra mer?
 
-Vänliga hälsningar
-NEKTAB`;
+Vänliga hälsningar,
+${recruiterName || "NEKTAB"}`;
 
     await navigator.clipboard.writeText(message);
     addLog(candidate, "Kopierade LinkedIn-meddelande");
@@ -1676,7 +1728,7 @@ NEKTAB`;
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-4 border border-border bg-[#fafafa] p-4 lg:grid-cols-2">
+              <div className="mt-4 grid gap-4 border border-border bg-[#fafafa] p-4 lg:grid-cols-3">
                 <div>
                   <p className="brand-kicker flex items-center gap-2 text-primary uppercase text-xs font-bold tracking-wider">
                     <FileText className="h-3.5 w-3.5" />
@@ -1684,7 +1736,7 @@ NEKTAB`;
                   </p>
                   <div className="mt-3 max-h-24 flex flex-wrap gap-2 overflow-y-auto">
                     {roleTemplates.length > 0 ? roleTemplates.map((template) => (
-                      <button
+                       <button
                         key={template.id}
                         type="button"
                         onClick={() => applySavedSearch(template)}
@@ -1719,18 +1771,49 @@ NEKTAB`;
                     )}
                   </div>
                 </div>
+
+                <div>
+                  <p className="brand-kicker flex items-center gap-2 text-primary uppercase text-xs font-bold tracking-wider">
+                    <User className="h-3.5 w-3.5" />
+                    Mina inställningar
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground">Din signatur (e-post/LinkedIn)</label>
+                      <input 
+                        type="text"
+                        value={recruiterName}
+                        onChange={(e) => {
+                          setRecruiterName(e.target.value);
+                          localStorage.setItem("nektab-recruiter-name", e.target.value);
+                        }}
+                        placeholder="T.ex. Andreas Strandberg"
+                        className="h-9 w-full border border-border bg-white px-3 text-xs outline-none focus:border-primary font-bold text-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <Card className="mt-6 border border-border shadow-none rounded-none">
-                <CardContent className="p-0">
-                  <textarea
-                    value={jobDescription}
-                    onChange={e => setJobDescription(e.target.value)}
-                    placeholder="Klistra in din arbetsbeskrivning här..."
-                    className="min-h-[230px] w-full resize-y rounded-none bg-white p-4 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary border-0"
-                  />
-                </CardContent>
-              </Card>
+              <div 
+                className={`mt-6 border relative transition-all ${isDraggingFile ? "border-dashed border-primary bg-primary/5 ring-2 ring-primary/25 animate-pulse" : "border-border bg-white"}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="absolute right-3 bottom-3 z-10 flex items-center gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-secondary hover:bg-secondary/80 text-foreground text-xs font-bold px-2.5 py-1.5 border border-border shadow-sm transition-all">
+                    <Upload className="h-3 w-3" /> Släpp eller Välj fil
+                    <input type="file" onChange={handleFileChange} accept=".txt,.md,.rtf,.json" className="hidden" />
+                  </label>
+                </div>
+                <textarea
+                  value={jobDescription}
+                  onChange={e => setJobDescription(e.target.value)}
+                  placeholder="Klistra in din arbetsbeskrivning här (eller dra och släpp en textfil)..."
+                  className="min-h-[230px] w-full resize-y rounded-none bg-transparent p-4 pb-12 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 border-0"
+                />
+              </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-4">
                 <Button onClick={handleAnalyze} disabled={isAnalyzing || isSearchingWeb} size="lg" className="site-button bg-primary text-black hover:bg-primary/95 font-bold gap-2">
@@ -1952,6 +2035,7 @@ NEKTAB`;
                         pipelineStatus={pipelineByCandidate[candidateId(candidate)] || "Ny"}
                         feedback={feedbackByCandidate[candidateId(candidate)]}
                         note={notesByCandidate[candidateId(candidate)] || ""}
+                        recruiterName={recruiterName}
                         onPipelineChange={(status) => handlePipelineChange(candidateId(candidate), status)}
                         onFeedbackChange={(feedback) => handleFeedbackChange(candidateId(candidate), feedback)}
                         onNoteChange={(note) => handleNoteChange(candidateId(candidate), note)}
