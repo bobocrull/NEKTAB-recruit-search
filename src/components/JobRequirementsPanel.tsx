@@ -11,6 +11,7 @@ interface JobRequirementsPanelProps {
   onChange?: (requirements: JobRequirements) => void;
   onSearchAgain?: (requirements: JobRequirements) => void;
   isSearching?: boolean;
+  onHoverSkill?: (skill: string | null) => void;
 }
 
 type ListKey = "keySkills" | "jobTitles" | "targetCompanies" | "industries";
@@ -47,6 +48,7 @@ export function JobRequirementsPanel({
   onChange,
   onSearchAgain,
   isSearching = false,
+  onHoverSkill,
 }: JobRequirementsPanelProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<JobRequirements>(requirements);
@@ -179,7 +181,12 @@ export function JobRequirementsPanel({
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {values.length > 0 ? values.map((value) => (
-                  <Badge key={value} className="gap-1 rounded-none border-0 bg-secondary text-xs font-bold text-foreground hover:bg-primary/25">
+                  <Badge 
+                    key={value} 
+                    className="gap-1 rounded-none border-0 bg-secondary text-xs font-bold text-foreground hover:bg-primary/25 cursor-pointer transition-all duration-200"
+                    onMouseEnter={() => !editing && onHoverSkill?.(value)}
+                    onMouseLeave={() => !editing && onHoverSkill?.(null)}
+                  >
                     {value}
                     {editing && (
                       <button type="button" onClick={() => removeValue(key, value)} aria-label={`Ta bort ${value}`}>

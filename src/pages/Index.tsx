@@ -458,6 +458,7 @@ export default function Index() {
 
   const [recruiterName, setRecruiterName] = useState(localStorage.getItem("nektab-recruiter-name") || "");
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [hoveredRequirementSkill, setHoveredRequirementSkill] = useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -1879,6 +1880,7 @@ ${recruiterName || "NEKTAB"}`;
                       onChange={handleRequirementsChange}
                       onSearchAgain={handleSearchWithRequirements}
                       isSearching={isSearchingWeb}
+                      onHoverSkill={setHoveredRequirementSkill}
                     />
                   )}
                   <CandidateFilters filters={filters} onChange={setFilters} availableSkills={allSkills} />
@@ -2014,6 +2016,50 @@ ${recruiterName || "NEKTAB"}`;
 
                 {requirements && filteredWebResults.length > 0 && renderXRaySearchPanel(requirements, true)}
 
+                {/* Sökstatistik / Analytics summary cards */}
+                {filteredWebResults.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                    <Card className="bg-white border border-border rounded-none shadow-sm">
+                      <CardContent className="p-4">
+                        <p className="text-[10px] uppercase font-extrabold text-muted-foreground tracking-wider">Antal matchningar</p>
+                        <p className="text-2xl font-bold mt-1 text-foreground">{filteredWebResults.length}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">I pool & webb</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-white border border-border rounded-none shadow-sm">
+                      <CardContent className="p-4">
+                        <p className="text-[10px] uppercase font-extrabold text-muted-foreground tracking-wider">Genomsnittlig match</p>
+                        <p className="text-2xl font-bold mt-1 text-primary">
+                          {Math.round(filteredWebResults.reduce((acc, curr) => acc + curr.score, 0) / filteredWebResults.length)}%
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">Relevans för rollen</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-white border border-border rounded-none shadow-sm">
+                      <CardContent className="p-4">
+                        <p className="text-[10px] uppercase font-extrabold text-muted-foreground tracking-wider">Toppkandidat</p>
+                        <p className="text-2xl font-bold mt-1 text-foreground">
+                          {Math.max(...filteredWebResults.map(c => c.score))}%
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">Högsta enskilda poäng</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-white border border-border rounded-none shadow-sm">
+                      <CardContent className="p-4">
+                        <p className="text-[10px] uppercase font-extrabold text-muted-foreground tracking-wider">Direkt kontaktbara</p>
+                        <p className="text-2xl font-bold mt-1 text-foreground">
+                          {filteredWebResults.filter(c => 
+                            (c.email && c.email !== "Not available" && c.email !== "Klicka för att hämta") || 
+                            (c.phone && c.phone !== "Not available" && c.phone !== "Klicka för att hämta") || 
+                            c.linkedin
+                          ).length} st
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">Med e-post/tele/LinkedIn</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
                 <div className="candidate-scroll-panel space-y-4">
 
                   {filteredWebResults.map((candidate, i) => (
@@ -2043,6 +2089,7 @@ ${recruiterName || "NEKTAB"}`;
                         onEnrich={() => handleEnrich(candidate)}
                         onSelectedChange={(selected) => handleCandidateSelection(candidateId(candidate), selected)}
                         onSaveToDb={() => saveWebCandidateToDb(candidate)}
+                        hoveredSkill={hoveredRequirementSkill}
                       />
                     </div>
                   ))}

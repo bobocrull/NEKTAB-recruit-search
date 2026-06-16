@@ -63,6 +63,7 @@ interface CandidateCardProps {
   onEnrich?: () => void;
   onSelectedChange?: (selected: boolean) => void;
   onSaveToDb?: () => void;
+  hoveredSkill?: string | null;
 }
 
 export function CandidateCard({
@@ -81,6 +82,7 @@ export function CandidateCard({
   onEnrich,
   onSelectedChange,
   onSaveToDb,
+  hoveredSkill = null,
 }: CandidateCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [contactExpanded, setContactExpanded] = useState(false);
@@ -110,8 +112,28 @@ export function CandidateCard({
   const strongestMatches = candidate.matchedSkills.slice(0, 3);
   const mainGaps = candidate.missingSkills.slice(0, 2);
 
+  const CRITICAL_WARNINGS = ["LinkedIn saknas", "Kontaktuppgifter saknas", "Låg datakvalitet"];
+  const criticalFlags = candidate.redFlags.filter(flag => CRITICAL_WARNINGS.includes(flag));
+  const insightFlags = candidate.redFlags.filter(flag => !CRITICAL_WARNINGS.includes(flag));
+
+  const scoreStrokeColor = (score: number) => {
+    if (score >= 70) return "#15b8a6"; // teal/primary
+    if (score >= 45) return "#f59e0b"; // amber
+    return "#ef4444"; // red
+  };
+  
+  const isHighlighted = Boolean(
+    hoveredSkill && (
+      candidate.matchedSkills.some(s => s.toLowerCase() === hoveredSkill.toLowerCase()) ||
+      candidate.currentRole.toLowerCase().includes(hoveredSkill.toLowerCase()) ||
+      candidate.skills.some(s => s.toLowerCase() === hoveredSkill.toLowerCase())
+    )
+  );
+
+  const strokeDashoffset = ((100 - candidate.score) / 100) * 138;
+
   return (
-    <Card className={`border-0 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.12)] ${selected ? "ring-2 ring-primary" : ""}`}>
+    <Card className={`border-0 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.12)] ${selected ? "ring-2 ring-primary" : ""} ${isHighlighted ? "ring-2 ring-primary bg-primary/5 shadow-[0_0_15px_rgba(95,200,145,0.35)] scale-[1.01]" : ""}`}>
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
           {onSelectedChange && (
@@ -119,17 +141,64 @@ export function CandidateCard({
               checked={selected}
               onCheckedChange={(value) => onSelectedChange(value === true)}
               aria-label={`Välj ${candidate.name} för export`}
-              className="mt-3 h-5 w-5 shrink-0 border-primary data-[state=checked]:bg-primary data-[state=checked]:text-black"
+              className="mt-4 h-5 w-5 shrink-0 border-primary data-[state=checked]:bg-primary data-[state=checked]:text-black"
             />
           )}
 
-          <div className="shrink-0">
+          {/* Premium Circular Match Score Ring around Avatar */}
+          <div className="relative flex items-center justify-center h-14 w-14 shrink-0">
             {imageUrl ? (
-              <img src={imageUrl} alt="" className="h-14 w-14 rounded-full object-cover" />
+              <>
+                <img src={imageUrl} alt="" className="absolute h-9 w-9 rounded-full object-cover" />
+                <svg className="h-14 w-14 transform -rotate-90">
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="22"
+                    stroke="#f1f5f9"
+                    strokeWidth="2.5"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="22"
+                    stroke={scoreStrokeColor(candidate.score)}
+                    strokeWidth="2.5"
+                    fill="transparent"
+                    strokeDasharray="138"
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </>
             ) : (
-              <div className={`flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold ${scoreBg(candidate.score)} ${scoreColor(candidate.score)}`}>
-                {initials || `#${rank}`}
-              </div>
+              <>
+                <svg className="h-14 w-14 transform -rotate-90">
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="22"
+                    stroke="#f1f5f9"
+                    strokeWidth="3.5"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="22"
+                    stroke={scoreStrokeColor(candidate.score)}
+                    strokeWidth="3.5"
+                    fill="transparent"
+                    strokeDasharray="138"
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className={`absolute text-sm font-extrabold font-mono ${scoreColor(candidate.score)}`}>
+                  {candidate.score}
+                </span>
+              </>
             )}
           </div>
 
@@ -142,8 +211,8 @@ export function CandidateCard({
                   <span className="break-words">{candidate.currentRole} på {candidate.company}</span>
                 </p>
               </div>
-              <div className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-lg font-bold ${scoreBg(candidate.score)} ${scoreColor(candidate.score)}`}>
-                {candidate.score}
+              <div className={`text-xs font-mono font-extrabold uppercase px-2 py-0.5 rounded shrink-0 h-6 flex items-center ${scoreBg(candidate.score)} ${scoreColor(candidate.score)}`}>
+                {candidate.score}% Match
               </div>
             </div>
 
@@ -231,11 +300,11 @@ export function CandidateCard({
               )}
             </div>
 
-            {(candidate.redFlags.length > 0 || feedback) && (
+            {(criticalFlags.length > 0 || feedback) && (
               <div className="flex flex-wrap gap-1.5">
-                {candidate.redFlags.map((flag) => (
-                  <Badge key={flag} variant="outline" className="gap-1 rounded-none border-score-low/40 text-xs font-bold text-score-low">
-                    <AlertTriangle className="h-3 w-3" /> {flag}
+                {criticalFlags.map((flag) => (
+                  <Badge key={flag} variant="outline" className="gap-1 rounded-none border-amber-300 bg-amber-50/50 text-xs font-bold text-amber-700 px-2 py-0.5">
+                    <AlertTriangle className="h-3 w-3 text-amber-600" /> {flag}
                   </Badge>
                 ))}
                 {feedback && (
@@ -274,7 +343,7 @@ export function CandidateCard({
               </div>
 
               <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={onCopyOutreach} className="h-9 gap-1 rounded-full border-primary text-xs font-bold bg-[#fafafa]">
+                <Button type="button" variant="outline" size="sm" onClick={onCopyOutreach} className="h-9 gap-1 rounded-full border-primary text-xs font-bold bg-[#fafafa]" title="Kopiera outreach-meddelande till urklipp">
                   <Copy className="h-3.5 w-3.5" /> Kopiera meddelande
                 </Button>
                 <Button 
@@ -295,6 +364,28 @@ export function CandidateCard({
 
             {isExpanded && (
               <div className="space-y-4 pt-4 border-t border-border mt-3 animate-fade-in">
+                {/* Sökobservationer (insights) */}
+                {insightFlags.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase font-extrabold text-muted-foreground tracking-wider">Sökanalys & Observationer</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {insightFlags.map((flag) => {
+                        const isNetwork = flag.includes("Nätverk");
+                        return (
+                          <Badge key={flag} variant="outline" className="gap-1.5 rounded-none border-slate-300 bg-slate-50 text-xs font-bold text-slate-700 px-2.5 py-1">
+                            {isNetwork ? (
+                              <Network className="h-3 w-3 text-slate-500" />
+                            ) : (
+                              <FileSearch className="h-3 w-3 text-slate-500" />
+                            )}
+                            {flag}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="border-l-4 border-primary bg-primary/5 p-3 text-sm font-bold text-foreground">
                   {candidate.decisionSummary}
                 </div>
@@ -356,7 +447,15 @@ export function CandidateCard({
                   <p className="text-xs font-bold text-foreground">Kompetenser</p>
                   <div className="flex flex-wrap gap-1.5">
                     {candidate.skills.map((skill) => (
-                      <Badge key={skill} variant="secondary" className="rounded-none border-0 bg-secondary px-2 py-0.5 text-xs font-bold">
+                      <Badge 
+                        key={skill} 
+                        variant="secondary" 
+                        className={`rounded-none border-0 px-2 py-0.5 text-xs font-bold transition-all duration-200 ${
+                          hoveredSkill && skill.toLowerCase() === hoveredSkill.toLowerCase()
+                            ? "bg-primary text-black scale-110 shadow-sm"
+                            : "bg-secondary text-foreground"
+                        }`}
+                      >
                         {skill}
                       </Badge>
                     ))}
@@ -371,7 +470,14 @@ export function CandidateCard({
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {candidate.matchedSkills.length > 0 ? (
                         candidate.matchedSkills.map((skill) => (
-                          <Badge key={skill} className="rounded-none border-0 bg-secondary text-xs font-bold text-foreground">
+                          <Badge 
+                            key={skill} 
+                            className={`rounded-none border-0 text-xs font-bold transition-all duration-200 ${
+                              hoveredSkill && skill.toLowerCase() === hoveredSkill.toLowerCase()
+                                ? "bg-primary text-black scale-110 shadow-sm"
+                                : "bg-secondary text-foreground"
+                            }`}
+                          >
                             {skill}
                           </Badge>
                         ))
