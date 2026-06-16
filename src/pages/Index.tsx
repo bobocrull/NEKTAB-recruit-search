@@ -501,23 +501,26 @@ export default function Index() {
 
   // Save candidate from free web search into Supabase DB + local fallback
   const saveWebCandidateToDb = async (candidate: any) => {
-    const canonicalKey = candidate.linkedin_url || `web-manual-${candidate.name.replace(/\s+/g, "-").toLowerCase()}`;
+    const linkedinUrl = candidate.linkedin || candidate.linkedin_url || "";
+    const currentRole = candidate.currentRole || candidate.current_role || "Projektör";
+    const yearsOfExperience = Number(candidate.yearsOfExperience || candidate.years_of_experience || 3);
+    const canonicalKey = linkedinUrl || `web-manual-${candidate.name.replace(/\s+/g, "-").toLowerCase()}`;
     
     const newCandidateObj = {
       id: candidate.id,
       name: candidate.name,
-      currentRole: candidate.current_role,
+      currentRole: currentRole,
       company: candidate.company,
-      yearsOfExperience: Number(candidate.years_of_experience || 3),
+      yearsOfExperience: yearsOfExperience,
       skills: candidate.skills || [],
       location: candidate.location,
-      linkedin: candidate.linkedin_url || "",
+      linkedin: linkedinUrl,
       email: candidate.email === "Klicka för att hämta" ? "Not available" : candidate.email,
       phone: candidate.phone === "Klicka för att hämta" ? "Not available" : candidate.phone,
       avatarUrl: "",
       profileImageUrl: "",
       summary: candidate.summary || "",
-      source: candidate.linkedin_url || "Web",
+      source: linkedinUrl || "Web",
       sourceCategory: "Intern databas" as any,
       evidenceSnippets: [],
       networkSignals: []
@@ -532,12 +535,12 @@ export default function Index() {
       const { error } = await supabase.from("candidates").upsert({
         canonical_key: canonicalKey,
         name: candidate.name,
-        current_role: candidate.current_role,
+        current_role: currentRole,
         company: candidate.company,
-        years_of_experience: Number(candidate.years_of_experience || 3),
+        years_of_experience: yearsOfExperience,
         skills: candidate.skills || [],
         location: candidate.location,
-        linkedin_url: candidate.linkedin_url || null,
+        linkedin_url: linkedinUrl || null,
         email: candidate.email === "Klicka för att hämta" ? null : candidate.email,
         phone: candidate.phone === "Klicka för att hämta" ? null : candidate.phone,
         data_confidence: { level: "Hög", score: 85, reasons: ["Hämtad från extern sökning"] } as any,
