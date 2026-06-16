@@ -380,35 +380,90 @@ Valfria secrets:
 
 Cinode-tokenanvändaren behöver ha Recruitment-modulen och behörighet motsvarande `CompanyRecruiter`.
 
-## Säkerhetshärdning
+## Kodstruktur & Arkitektur
 
-Appen har ett grundskydd mot de vanligaste fynden från webbtester:
+Projektet är uppbyggt som en modern React-applikation (TypeScript) med Vite som byggverktyg och Supabase som backend- och databasplattform.
 
-- Content Security Policy
-- `frame-ancestors 'none'` och `X-Frame-Options: DENY`
-- `X-Content-Type-Options: nosniff`
-- `Referrer-Policy`
-- `Permissions-Policy`
-- HSTS för produktionsdeploy
-- begränsad CORS i edge functions
-- payload-size limit
-- enkel rate limiting per edge function
-- valfri intern API-nyckel
-- valfri kravställning på authenticated Supabase JWT
+### Katalogstruktur:
+- `src/`: Innehåller frontend-källkoden.
+  - `src/components/`: Återanvändbara UI-komponenter byggda med Tailwind CSS och Shadcn UI (t.ex. `CandidateCard.tsx`, `JobRequirementsPanel.tsx`).
+  - `src/pages/`: Huvudsidor som `Index.tsx` (sökgränssnitt, sparade kandidater i databas, analyspaneler).
+  - `src/index.css`: Huvudstilmall som etablerar NEKTAB:s färgprofil och CSS-variabler.
+- `supabase/`: Innehåller databasmigrationsfiler (`supabase/migrations/`) som definierar schema, indexering och Row-Level Security (RLS) policies.
+- `scripts/`: DevSecOps och automatiseringsverktyg:
+  - `run_sast.js`: Statisk analys (SAST) som letar efter mönster för sårbarheter eller läckta nycklar.
+  - `run_dast.js`: Dynamisk analys (DAST) som validerar HTTP-svarshuvuden och nätverkssäkerhet.
+  - `install_hooks.js`: Automatisk installation av Git-hooks för pre-commit-kontroller.
+- `docs/`: Djupgående dokumentation:
+  - `docs/PENETRATION_TESTING.md`: Ramverk och checklistor för penetrationstestare.
+  - `SECURITY.md`: Säkerhetspolicys och riktlinjer för säker utvecklingsmiljö.
 
-Rekommenderade produktionsvärden:
+---
 
-- `ALLOWED_ORIGINS=https://din-interna-domän`
-- `MAX_REQUEST_BYTES=120000`
-- `RATE_LIMIT_REQUESTS=20`
-- `RATE_LIMIT_WINDOW_MS=60000`
-- `REQUIRE_AUTHENTICATED_USER=true` när intern inloggning är på plats
+## Säkerhetsarkitektur & DevSecOps-ramverk
 
-Valfritt extra skydd för server-till-server eller gateway:
+NEKTAB Candidate Search är byggd med fokus på att upprätthålla en **säker utvecklingsmiljö** och skydda känslig data. Utvecklingsprocessen och källkoden följer strikt kraven i följande globala säkerhetsramverk:
 
-- `INTERNAL_API_KEY`
+### 1. CIS Controls Kapitel 16 (Application Software Security)
+- **Säker utvecklingsprocess (16.1)**: Integrerat statisk kodanalys (SAST) och licens/sårbarhetsrevisioner direkt i byggsteget.
+- **Undvik hårdkodade hemligheter (16.2)**: Inga API-nycklar eller databashandtag är hårdkodade i källkoden. Alla konfigurationsparametrar hanteras via environment-variabler och skyddas lokalt via `.gitignore`.
+- **Indata- och utdatavalidering (16.3)**: Reacts automatiska HTML-escaping förhindrar insprutning av fientliga skript (XSS).
+- **Databassäkerhet (16.4)**: Strikt Row-Level Security (RLS) är aktiverat på alla publika tabeller.
 
-Frontend ska alltid ligga bakom intern åtkomstkontroll, till exempel Microsoft Entra ID, Cloudflare Access eller motsvarande.
+### 2. NIST Secure Software Development Framework (SSDF)
+- **PW.4: Mitigate Vulnerabilities**: Utvecklare tvingas köra sårbarhetskontroller via en pre-commit hook innan kod kan sparas i Git.
+- **PO.1.3: Secure Development Environment**: Separering av produktionsnycklar och lokala utvecklingstemplat (`.env.example`).
+
+### 3. SAFECode Application Security Addendum
+- Tillämpning av defensiv programmering (t.ex. strikt typning med TypeScript, schema-validering med Zod och minimerat användande av dynamisk exekvering som `eval()`).
+
+### 4. BSA / The Software Alliance Framework
+- Spårbarhet via full audit logging av händelser (`candidate_events`) och versionshanterad databasmigrering.
+
+### 5. OWASP Secure Coding Practices & Top 10
+- **BOLA (Broken Object Level Authorization)**: Förhindras genom att RLS-regler i Supabase verifierar resursägarskap (`auth.uid() = created_by`) och gör join-verifieringar vid access till underresurser (IDOR-skydd).
+- **Brister i kryptografi/lagring**: Inga JWT-tokens eller credentials lagras i osäkra lokala cookies; Supabase-tokens hanteras med standardiserade säkra flöden.
+
+### 6. Microsoft Security Development Lifecycle (SDL)
+- Genomförande av statisk analys (SAST) och dynamisk analys (DAST) vid build och deployment för att snabbt upptäcka och mitigera hot.
+
+---
+
+## Statiska (SAST) & Dynamiska (DAST) Tester
+
+### Statisk analys (SAST)
+En anpassad sårbarhetsskanner (`scripts/run_sast.js`) kontrollerar all källkod, inklusive `index.html`:
+```bash
+npm run sast
+```
+Skannern blockerar byggen om den upptäcker:
+- Hårdkodade API-nycklar eller credentials.
+- Användning av osäkra exekveringsfunktioner som `eval()`.
+- Direkt rendering av rå HTML utan sanering (`dangerouslySetInnerHTML`).
+- Saknade säkerhets-meta-taggar i `index.html` (såsom CSP eller Referrer-Policy).
+
+### Dynamisk analys (DAST)
+Verktyget (`scripts/run_dast.js`) kör dynamiska tester mot en körande applikation för att verifiera dess nätverkskonfiguration:
+```bash
+# Körs mot lokal server eller extern miljö
+npm run dast http://localhost:5173
+npm run dast https://kandidater.nektab.se
+```
+Den dynamiska skannern kontrollerar:
+- `Content-Security-Policy` (CSP)
+- `X-Frame-Options` (Skyddar mot clickjacking)
+- `X-Content-Type-Options` (Skyddar mot MIME-sniffing)
+- `Strict-Transport-Security` (HSTS för HTTPS-anslutningar)
+- Felaktiga eller för tillåtande CORS-inställningar (`Access-Control-Allow-Origin: *`)
+
+---
+
+## Penetrationstest-resiliens
+
+Applikationen är förberedd för penetrationstester. För detaljerade instruktioner om hur man utför manuella och automatiserade säkerhetsverifieringar (inklusive IDOR-, XSS- och JWT-tester), se den fullständiga penetrationsguiden:
+👉 **[Penetration Testing Guide](file:///C:/Users/asg02/Documents/Webscraper%20kandidater/skill-match-buddy-26-main/docs/PENETRATION_TESTING.md)**
+
+---
 
 ## Vad som är NEKTAB:s know-how
 
