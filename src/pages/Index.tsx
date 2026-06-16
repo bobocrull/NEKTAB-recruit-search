@@ -6,7 +6,9 @@ import { JobRequirementsPanel } from "@/components/JobRequirementsPanel";
 import { CandidateFilters, CandidateFiltersState } from "@/components/CandidateFilters";
 import { rankCandidates, JobRequirements, ScoredCandidate } from "@/lib/matchingLogic";
 import { applyFilters } from "@/lib/candidateFilters";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
+
+const supabase = supabaseClient as any;
 import { Search, Loader2, AlertCircle, Download, BookmarkPlus, BookmarkCheck, Trash2, ShieldCheck, ExternalLink, Save, History, FileText, Lock, Mail as MailIcon, LogOut, Check, ArrowRight, User, Plus, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
@@ -267,6 +269,133 @@ function candidateId(candidate: ScoredCandidate): string {
   return String(candidate.id);
 }
 
+async function getFunctionErrorMessage(err: unknown): Promise<string> {
+  if (err instanceof Response) {
+    try {
+      const data = await err.json();
+      return data.error || data.message || `Felkod: ${err.status}`;
+    } catch {
+      try {
+        const text = await err.text();
+        return text || `Felkod: ${err.status}`;
+      } catch {
+        return `Serverfel: ${err.status}`;
+      }
+    }
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return String(err || "Ett okänt fel uppstod");
+}
+
+function buildQuickJobDescription(keyword: string): string {
+  if (!keyword.trim()) return "";
+  
+  const kw = keyword.toLowerCase();
+  let roleTitle = keyword;
+  let skills = "Elnätsdesign, CAD, Projektering";
+  let tasks = "Konstruktion och projektering av elnät.";
+  
+  if (kw.includes("kraftledning") || kw.includes("luftledning")) {
+    roleTitle = keyword.includes("Senior") ? "Senior Kraftledningsprojektör" : "Kraftledningsprojektör";
+    skills = "Luftledning, Stolpplacering, CAD, MicroStation, Högspänning, Geografi, Markåtkomst";
+    tasks = "Konstruktion av luftledningar (över 40kV), stolpplacering samt tillståndshantering.";
+  } else if (kw.includes("beredare") || kw.includes("beredning")) {
+    roleTitle = "Beredare Elnät";
+    skills = "Beredning, Markägarkontakter, Markåtkomst, EBR, Kalkylering, Kabelförläggning";
+    tasks = "Projektering, EBR-kalkylering och markägarkontakter för distributionsnät.";
+  } else if (kw.includes("cad")) {
+    roleTitle = "CAD-konstruktör Elkraft";
+    skills = "CAD, AutoCAD, MicroStation, Elkraft, Konstruktion, Dokumentation";
+    tasks = "Skapa ritningar, layouter och teknisk dokumentation för elnätsprojekt.";
+  } else if (kw.includes("station") || kw.includes("ställverk")) {
+    roleTitle = "Stationsprojektör / Ställverkskonstruktör";
+    skills = "Stationsprojektering, Ställverk, Transformator, Primärkonstruktion, Sekundärkonstruktion";
+    tasks = "Projektering och konstruktion av ställverk och transformatorstationer.";
+  } else if (kw.includes("projektledare")) {
+    roleTitle = "Projektledare Elnät";
+    skills = "Projektledning, Elnät, Entreprenad, ÄTA, EBR, Projektstyrning";
+    tasks = "Leda elnätsprojekt från förstudie till driftsättning och besiktning.";
+  }
+  
+  return `Titel: ${roleTitle}
+
+Vi söker nu en ${roleTitle} för att stärka vårt team inom elnät och elkraft.
+
+Nyckelkompetenser:
+- ${skills}
+- Erfarenhet av liknande roller inom energisektorn
+- Relevant ingenjörsutbildning eller motsvarande arbetslivserfarenhet
+
+Huvudsakliga arbetsuppgifter:
+- ${tasks}
+- Samarbete med interna konsulter, kunder och markägare
+- Framtagning av tekniska underlag, ritningar och kalkyler`;
+}
+
+function downloadCandidatesCsv(
+  candidates: ScoredCandidate[],
+  pipeline: Record<string, string>,
+  feedback: Record<string, string>,
+  notes: Record<string, string>
+) {
+  const headers = [
+    "Namn",
+    "Nuvarande roll",
+    "Företag",
+    "Erfarenhet (år)",
+    "Plats",
+    "E-post",
+    "Telefon",
+    "LinkedIn-profil",
+    "Matchpoäng",
+    "Status",
+    "Feedback",
+    "Kommentarer"
+  ];
+
+  const rows = candidates.map(c => {
+    const statusVal = pipeline[c.id] || "Ny";
+    const feedbackVal = feedback[c.id] || "";
+    const noteVal = notes[c.id] || "";
+    return [
+      c.name,
+      c.currentRole,
+      c.company,
+      c.yearsOfExperience,
+      c.location,
+      c.email,
+      c.phone,
+      c.linkedin,
+      c.score,
+      statusVal,
+      feedbackVal,
+      noteVal.replace(/\n/g, " ")
+    ];
+  });
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row => row.map(val => {
+      const cell = val === undefined || val === null ? "" : String(val);
+      if (cell.includes(",") || cell.includes("\"") || cell.includes("\n")) {
+        return `"${cell.replace(/"/g, '""')}"`;
+      }
+      return cell;
+    }).join(","))
+  ].join("\n");
+
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `NEKTAB_kandidater_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 export default function Index() {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -453,17 +582,25 @@ export default function Index() {
 
   // Call the original Edge function on bqfksdoevseeknyiglur to search the web for free (via Lovable's keys!)
   const fetchWebCandidatesFree = async (reqs: JobRequirements): Promise<any[]> => {
-    const oldUrl = "https://bqfksdoevseeknyiglur.supabase.co/functions/v1/search-candidates";
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const oldUrl = isLocal 
+      ? "https://bqfksdoevseeknyiglur.supabase.co/functions/v1/search-candidates"
+      : "/api/search-candidates";
     const oldAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxZmtzZG9ldnNlZWtueWlnbHVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MDQ0NDEsImV4cCI6MjA5MDQ4MDQ0MX0.40mAdlNjKTp5ydyYvR6icObQENOosKM26dKyplzxkWA";
     
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json"
+      };
+
+      if (isLocal) {
+        headers["apikey"] = oldAnonKey;
+        headers["Authorization"] = `Bearer ${oldAnonKey}`;
+      }
+
       const res = await fetch(oldUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": oldAnonKey,
-          "Authorization": `Bearer ${oldAnonKey}`
-        },
+        headers,
         body: JSON.stringify({
           requirements: reqs,
           query: reqs.jobTitles?.[0] || ""
@@ -776,7 +913,7 @@ export default function Index() {
     });
 
     selectedCandidates.forEach((candidate) => {
-      setPipelineByCandidate(prev => ({ ...prev, [candidate.id]: "Intressant" }));
+      setPipelineByCandidate(prev => ({ ...prev, [candidate.id]: "Intressant" as PipelineStatus }));
     });
     
     toast({ title: `Sparade ${selectedCandidates.length} kandidater i kortlistan` });
@@ -786,6 +923,13 @@ export default function Index() {
     setShortlist([]);
     setShowShortlistOnly(false);
     toast({ title: "Kortlistan är rensad" });
+  };
+
+  const handleEnrich = async (candidate: any) => {
+    toast({
+      title: "Kontaktuppgifter",
+      description: `E-post och telefon för ${candidate.name} kan sökas manuellt via hens LinkedIn-profil: ${candidate.linkedin || "Ingen länk tillgänglig"}.`,
+    });
   };
 
   const handlePipelineChange = async (id: string, status: PipelineStatus) => {

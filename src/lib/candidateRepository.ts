@@ -1,4 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
+
+const supabase = supabaseClient as any;
 import type { Json } from "@/integrations/supabase/types";
 import type { JobRequirements, ScoredCandidate } from "@/lib/matchingLogic";
 
@@ -74,8 +76,8 @@ export async function persistSearchWithCandidates(input: PersistSearchInput) {
       .from("search_candidates")
       .upsert(
         {
-          search_id: search.id,
-          candidate_id: savedCandidate.id,
+          search_id: search!.id,
+          candidate_id: savedCandidate!.id,
           score: candidate.score,
           score_breakdown: candidate.scoreBreakdown as unknown as Json,
           matched_skills: candidate.matchedSkills,
@@ -93,22 +95,22 @@ export async function persistSearchWithCandidates(input: PersistSearchInput) {
     if (relationError) throw relationError;
 
     await supabase.from("candidate_sources").insert({
-      candidate_id: savedCandidate.id,
+      candidate_id: savedCandidate!.id,
       source_name: candidate.source || "web",
       source_url: candidate.linkedin ?? null,
       raw_payload: candidate as unknown as Json,
     });
 
     await supabase.from("candidate_events").insert({
-      candidate_id: savedCandidate.id,
-      search_candidate_id: searchCandidate.id,
+      candidate_id: savedCandidate!.id,
+      search_candidate_id: searchCandidate!.id,
       event_type: "created",
       message: `Kandidat hittades i sökning "${input.title}".`,
       created_by: userId,
     });
   }
 
-  return search.id;
+  return search!.id;
 }
 
 export async function updateSearchCandidateStatus(

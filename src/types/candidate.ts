@@ -27,7 +27,8 @@ export type CandidateSourceCategory =
   | "Forskning"
   | "Bolagssida"
   | "Katalog"
-  | "Öppen webb";
+  | "Öppen webb"
+  | "Intern databas";
 
 export interface CandidateNetworkSignal {
   label: string;
