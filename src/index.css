@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+
+    --primary: 147 49% 58%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 148 49% 93%;
+    --secondary-foreground: 0 0% 4%;
+
+    --muted: 148 49% 93%;
+    --muted-foreground: 0 0% 32%;
+
+    --accent: 202 43% 93%;
+    --accent-foreground: 0 0% 4%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 86%;
+    --ring: 147 49% 58%;
+
+    --radius: 0;
+
+    --score-high: 152 69% 41%;
+    --score-medium: 38 92% 50%;
+    --score-low: 0 84% 60%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 147 49% 58%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 148 49% 93%;
+    --sidebar-accent-foreground: 0 0% 4%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 147 49% 58%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 168 71% 39%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 221 83% 53%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-foreground;
+  }
+}
+
+@layer components {
+  .brand-grid {
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(90deg, rgb(0 0 0 / 0.045) 1px, transparent 1px),
+      linear-gradient(0deg, rgb(0 0 0 / 0.045) 1px, transparent 1px),
+      linear-gradient(135deg, transparent 0 58%, rgb(95 200 145 / 0.16) 58% 61%, transparent 61%);
+    background-size: 64px 64px, 64px 64px, 280px 280px;
+  }
+
+  .brand-cut {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%);
+  }
+
+  .brand-kicker {
+    @apply text-xs font-bold uppercase tracking-[0.05em];
+  }
+
+  .site-shell {
+    @apply min-h-screen bg-white text-foreground;
+  }
+
+  .site-header {
+    @apply absolute left-0 right-0 top-0 z-20 border-b border-white/10 bg-transparent text-white;
+  }
+
+  .site-nav-link {
+    @apply text-xs font-extrabold uppercase tracking-[0.05em] text-white/90 transition-colors hover:text-primary;
+  }
+
+  .site-hero {
+    background-image:
+      linear-gradient(rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.72)),
+      url("https://nektab.se/wp-content/uploads/2023/09/Vindkraftverk-tre-medarbetare-arbetsklader-1024x768.webp");
+    background-position: 53% 54%;
+    background-size: cover;
+  }
+
+  .site-section {
+    @apply w-full py-8 md:py-12;
+  }
+
+  .site-panel {
+    @apply bg-white shadow-[0_12px_35px_rgba(0,0,0,0.10)];
+  }
+
+  .site-button {
+    @apply rounded-full bg-primary px-6 font-bold normal-case text-black transition-all hover:bg-primary/90 hover:shadow-[inset_0_0_0_999px_rgba(0,0,0,0.10)];
+  }
+
+  .site-link-button {
+    @apply rounded-none bg-transparent px-0 font-bold normal-case text-primary underline-offset-8 hover:bg-transparent hover:text-black hover:underline;
+  }
+
+  .line-heading {
+    @apply relative pl-6;
+  }
+
+  .line-heading::before {
+    content: "";
+    @apply absolute left-0 top-1 h-16 w-[3px] bg-primary;
+  }
+
+  .candidate-scroll-panel {
+    max-height: min(980px, calc(100vh - 176px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.35rem;
+    scroll-padding-top: 1rem;
+  }
+
+  .candidate-scroll-panel::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .candidate-scroll-panel::-webkit-scrollbar-track {
+    background: rgb(255 255 255 / 0.7);
+  }
+
+  .candidate-scroll-panel::-webkit-scrollbar-thumb {
+    background: rgb(95 200 145 / 0.75);
+    border: 2px solid rgb(245 245 242);
+  }
+
+  @media (max-width: 1023px) {
+    .candidate-scroll-panel {
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+  }
+}
