@@ -1070,8 +1070,194 @@ NEKTAB`;
     );
   }
 
+  const renderXRaySearchPanel = (reqs: JobRequirements, compact = false) => {
+    const titles = reqs.jobTitles?.length ? reqs.jobTitles : [];
+    const skills = reqs.keySkills?.length ? reqs.keySkills : [];
+    const loc = reqs.location || "";
+    
+    const titlePart = titles.length > 0 
+      ? `(${titles.map(t => `"${t}"`).join(" OR ")})`
+      : "";
+    
+    const skillsPart = skills.slice(0, 3).map(s => `"${s}"`).join(" ");
+    const locPart = loc ? `"${loc}"` : "";
+    
+    const baseQuery = [titlePart, skillsPart, locPart].filter(Boolean).join(" ");
+    
+    const linkedinQuery = `site:linkedin.com/in ${baseQuery} -intitle:"jobs" -intitle:"hiring" -intitle:"rekryterare" -intitle:"recruiter"`;
+    const rocketreachQuery = `site:rocketreach.co ${baseQuery} -intitle:"jobs" -intitle:"hiring"`;
+    const githubQuery = `site:github.com ${titles[0] ? `"${titles[0]}"` : ""} ${skills.slice(0, 2).map(s => `"${s}"`).join(" ")} ${locPart} -intitle:"jobs"`;
+
+    const linkedinUrl = `https://www.google.com/search?q=${encodeURIComponent(linkedinQuery)}`;
+    const rocketreachUrl = `https://www.google.com/search?q=${encodeURIComponent(rocketreachQuery)}`;
+    const githubUrl = `https://www.google.com/search?q=${encodeURIComponent(githubQuery)}`;
+
+    const copyToClipboard = (text: string, label: string) => {
+      navigator.clipboard.writeText(text);
+      toast({
+        title: "Kopierad!",
+        description: `Söksträng för ${label} har kopierats till urklipp.`,
+      });
+    };
+
+    if (compact) {
+      return (
+        <Card className="bg-[#f0f4f1] border border-primary/20 rounded-none shadow-sm mt-4 mb-4">
+          <CardContent className="p-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-base text-foreground flex items-center gap-2">
+                  <Search className="h-5 w-5 text-primary" />
+                  Sök externt med Google X-Ray (Helt kostnadsfritt)
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Hittar du inte rätt kandidat lokalt? Sök på LinkedIn, RocketReach eller GitHub helt utan API-kostnader.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  type="button"
+                  size="sm" 
+                  className="bg-primary text-black hover:bg-primary/90 rounded-none font-bold text-xs"
+                  onClick={() => window.open(linkedinUrl, "_blank")}
+                >
+                  Sök LinkedIn <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+                <Button 
+                  type="button"
+                  size="sm" 
+                  variant="outline"
+                  className="border-primary text-foreground hover:bg-primary/10 rounded-none font-bold bg-white text-xs"
+                  onClick={() => window.open(rocketreachUrl, "_blank")}
+                >
+                  Sök RocketReach <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="bg-white border border-border rounded-none shadow-sm">
+        <CardContent className="p-6">
+          <h3 className="font-bold text-lg text-foreground flex items-center gap-2 border-b border-border pb-3">
+            <Search className="h-5 w-5 text-primary" />
+            Externa sökverktyg (X-Ray Search)
+          </h3>
+          <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+            Eftersom du valt att köra applikationen med <strong>0 kr i API-kostnad</strong> kan vi inte göra automatiska anrop till betaltjänster. 
+            Istället kan du söka efter kandidater på webben helt gratis med Google X-Ray Search. Klicka på länkarna nedan för att söka:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="border border-border p-4 bg-muted/10 flex flex-col justify-between space-y-3">
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">
+                  LinkedIn
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sök profiler direkt på LinkedIn via Googles indexering för att hitta rätt kompetens.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button 
+                  type="button"
+                  className="w-full bg-primary text-black hover:bg-primary/90 rounded-none font-bold text-xs h-9"
+                  onClick={() => window.open(linkedinUrl, "_blank")}
+                >
+                  Öppna sökning <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  className="w-full border-border text-foreground hover:bg-muted rounded-none font-bold text-xs h-9"
+                  onClick={() => copyToClipboard(linkedinQuery, "LinkedIn")}
+                >
+                  Kopiera söksträng
+                </Button>
+              </div>
+            </div>
+
+            <div className="border border-border p-4 bg-muted/10 flex flex-col justify-between space-y-3">
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">
+                  RocketReach
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sök efter profiler på RocketReach för att hitta e-postadresser och kontaktuppgifter.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button 
+                  type="button"
+                  className="w-full bg-primary text-black hover:bg-primary/90 rounded-none font-bold text-xs h-9"
+                  onClick={() => window.open(rocketreachUrl, "_blank")}
+                >
+                  Öppna sökning <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  className="w-full border-border text-foreground hover:bg-muted rounded-none font-bold text-xs h-9"
+                  onClick={() => copyToClipboard(rocketreachQuery, "RocketReach")}
+                >
+                  Kopiera söksträng
+                </Button>
+              </div>
+            </div>
+
+            <div className="border border-border p-4 bg-muted/10 flex flex-col justify-between space-y-3">
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">
+                  GitHub
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sök efter utvecklare eller tekniker som har publicerat relaterade projekt och kod.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button 
+                  type="button"
+                  className="w-full bg-primary text-black hover:bg-primary/90 rounded-none font-bold text-xs h-9"
+                  onClick={() => window.open(githubUrl, "_blank")}
+                >
+                  Öppna sökning <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  className="w-full border-border text-foreground hover:bg-muted rounded-none font-bold text-xs h-9"
+                  onClick={() => copyToClipboard(githubQuery, "GitHub")}
+                >
+                  Kopiera söksträng
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-primary/5 border-l-4 border-primary p-4 mt-6 text-xs text-foreground space-y-2">
+            <p className="font-bold flex items-center gap-1.5">
+              💡 Hur lägger jag till dem i appen?
+            </p>
+            <p className="leading-relaxed">
+              När du hittar en intressant profil via Googles sökresultat:
+            </p>
+            <ol className="list-decimal list-inside space-y-1 ml-1">
+              <li>Klicka på <strong>"Lägg till kandidat"</strong> i sidomenyn eller fliken i appen.</li>
+              <li>Klistra in kandidatens namn, titel, länk och kompetenser.</li>
+              <li>Kandidaten sparas direkt i er gemensamma databas och kan matchas mot framtida kravspecifikationer!</li>
+            </ol>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="site-shell min-h-screen bg-[#fafafa]">
+
       <header className="site-header bg-white border-b border-border transition-all">
         <div className="container flex h-[70px] items-center justify-between gap-5 lg:h-[90px]">
           <div className="flex min-w-0 items-center gap-4">
@@ -1444,12 +1630,18 @@ NEKTAB`;
                 )}
 
                 {!searchError && !isSearchingWeb && requirements && filteredWebResults.length === 0 && (
-                  <div className="bg-white p-5 text-sm text-muted-foreground shadow-sm">
-                    Inga kandidater matchar kraven i den lokala poolen för tillfället.
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="bg-white p-5 text-sm text-muted-foreground shadow-sm border border-border">
+                      Inga kandidater matchar kraven i den lokala poolen för tillfället.
+                    </div>
+                    {renderXRaySearchPanel(requirements)}
                   </div>
                 )}
 
+                {requirements && filteredWebResults.length > 0 && renderXRaySearchPanel(requirements, true)}
+
                 <div className="candidate-scroll-panel space-y-4">
+
                   {filteredWebResults.map((candidate, i) => (
                     <div key={candidate.id} className="relative group transition-all">
                       {savingStatus[candidate.id] && (
