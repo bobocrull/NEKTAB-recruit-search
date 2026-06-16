@@ -596,6 +596,12 @@ export default function Index() {
       if (isLocal) {
         headers["apikey"] = oldAnonKey;
         headers["Authorization"] = `Bearer ${oldAnonKey}`;
+      } else {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
       }
 
       const res = await fetch(oldUrl, {
