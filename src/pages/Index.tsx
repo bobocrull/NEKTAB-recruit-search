@@ -968,6 +968,7 @@ export default function Index() {
         }));
       } catch (webErr: any) {
         console.warn("Free web search failed, using local only", webErr);
+        setSearchError(webErr.message || "Okänt fel vid hämtning av webbkandidater.");
         toast({
           title: "Webbsökning misslyckades",
           description: webErr.message || "Okänt fel vid hämtning av webbkandidater.",
