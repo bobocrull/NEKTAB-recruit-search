@@ -826,12 +826,14 @@ export default function Index() {
             sourceCategory: c.sourceCategory || (c.linkedin?.includes("linkedin.com") ? "LinkedIn" : "Öppen webb")
           }));
         }
+      } else {
+        const errText = await res.text();
+        throw new Error(`Sök-API svarade med felkod ${res.status}: ${errText}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Free web search failed:", err);
+      throw err;
     }
-    
-    return [];
   };
 
   // Save candidate from free web search into Supabase DB + local fallback
@@ -964,8 +966,13 @@ export default function Index() {
           evidenceSnippets: [],
           networkSignals: []
         }));
-      } catch (webErr) {
+      } catch (webErr: any) {
         console.warn("Free web search failed, using local only", webErr);
+        toast({
+          title: "Webbsökning misslyckades",
+          description: webErr.message || "Okänt fel vid hämtning av webbkandidater.",
+          variant: "destructive",
+        });
       }
 
       // Merge local and web results
