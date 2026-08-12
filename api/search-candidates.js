@@ -1,3 +1,5 @@
+import { checkBotId } from 'botid/server';
+
 export default async function handler(req, res) {
   // Allow preflight OPTIONS request
   if (req.method === 'OPTIONS') {
@@ -6,6 +8,17 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.status(200).end();
     return;
+  }
+
+  // Verify challenge using Vercel BotID
+  try {
+    const { isBot } = await checkBotId();
+    if (isBot) {
+      res.status(403).json({ error: 'Access Denied: Bot detected' });
+      return;
+    }
+  } catch (botError) {
+    console.error("BotID check failed:", botError.message);
   }
 
   if (req.method !== 'POST') {
