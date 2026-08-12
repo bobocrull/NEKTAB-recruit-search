@@ -192,4 +192,21 @@
       padding-right: 0;
     }
   }
+
+  .glass-panel {
+    background: rgba(37, 46, 56, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+  }
+
+  .candidate-card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .candidate-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: rgba(95, 200, 145, 0.4);
+    box-shadow: 0 0 20px rgba(95, 200, 145, 0.15), 0 8px 30px rgba(0, 0, 0, 0.2);
+  }
 }

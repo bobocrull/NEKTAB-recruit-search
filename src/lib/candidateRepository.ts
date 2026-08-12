@@ -30,6 +30,7 @@ export async function persistSearchWithCandidates(input: PersistSearchInput) {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id ?? null;
 
+  // 1. Insert search
   const { data: search, error: searchError } = await supabase
     .from("recruitment_searches")
     .insert({
@@ -44,73 +45,127 @@ export async function persistSearchWithCandidates(input: PersistSearchInput) {
     .single();
 
   if (searchError) throw searchError;
+  if (!search) throw new Error("Search record was not created");
 
-  for (const candidate of input.candidates) {
-    const { data: savedCandidate, error: candidateError } = await supabase
-      .from("candidates")
-      .upsert(
-        {
-          canonical_key: canonicalKey(candidate),
-          name: candidate.name,
-          current_role: candidate.currentRole,
-          company: candidate.company,
-          years_of_experience: candidate.yearsOfExperience,
-          skills: candidate.skills,
-          location: candidate.location,
-          linkedin_url: candidate.linkedin ?? null,
-          email: candidate.email ?? null,
-          phone: candidate.phone ?? null,
-          avatar_url: candidate.avatarUrl ?? candidate.imageUrl ?? null,
-          profile_image_url: candidate.profileImageUrl ?? null,
-          data_confidence: candidate.dataConfidence as unknown as Json,
-          last_seen_at: new Date().toISOString(),
-        },
-        { onConflict: "canonical_key" }
-      )
-      .select("id")
-      .single();
-
-    if (candidateError) throw candidateError;
-
-    const { data: searchCandidate, error: relationError } = await supabase
-      .from("search_candidates")
-      .upsert(
-        {
-          search_id: search!.id,
-          candidate_id: savedCandidate!.id,
-          score: candidate.score,
-          score_breakdown: candidate.scoreBreakdown as unknown as Json,
-          matched_skills: candidate.matchedSkills,
-          missing_skills: candidate.missingSkills,
-          skill_evidence: candidate.skillEvidence as unknown as Json,
-          decision_summary: candidate.decisionSummary,
-          red_flags: candidate.redFlags,
-          recommendation: candidateRecommendation(candidate),
-        },
-        { onConflict: "search_id,candidate_id" }
-      )
-      .select("id")
-      .single();
-
-    if (relationError) throw relationError;
-
-    await supabase.from("candidate_sources").insert({
-      candidate_id: savedCandidate!.id,
-      source_name: candidate.source || "web",
-      source_url: candidate.linkedin ?? null,
-      raw_payload: candidate as unknown as Json,
-    });
-
-    await supabase.from("candidate_events").insert({
-      candidate_id: savedCandidate!.id,
-      search_candidate_id: searchCandidate!.id,
-      event_type: "created",
-      message: `Kandidat hittades i sökning "${input.title}".`,
-      created_by: userId,
-    });
+  if (!input.candidates || input.candidates.length === 0) {
+    return search.id;
   }
 
-  return search!.id;
+  // 2. Prepare candidates data
+  const candidateRecords = input.candidates.map(candidate => ({
+    canonical_key: canonicalKey(candidate),
+    name: candidate.name,
+    current_role: candidate.currentRole,
+    company: candidate.company,
+    years_of_experience: candidate.yearsOfExperience,
+    skills: candidate.skills,
+    location: candidate.location,
+    linkedin_url: candidate.linkedin ?? null,
+    email: candidate.email ?? null,
+    phone: candidate.phone ?? null,
+    avatar_url: candidate.avatarUrl ?? candidate.imageUrl ?? null,
+    profile_image_url: candidate.profileImageUrl ?? null,
+    data_confidence: candidate.dataConfidence as unknown as Json,
+    last_seen_at: new Date().toISOString(),
+  }));
+
+  // 3. Batch upsert candidates
+  const { data: savedCandidates, error: candidateError } = await supabase
+    .from("candidates")
+    .upsert(candidateRecords, { onConflict: "canonical_key" })
+    .select("id, canonical_key");
+
+  if (candidateError) throw candidateError;
+  if (!savedCandidates) throw new Error("Failed to retrieve upserted candidates");
+
+  // Create a map from canonical_key to candidate ID for quick lookup
+  const candidateIdMap = new Map<string, string>();
+  for (const row of savedCandidates) {
+    candidateIdMap.set(row.canonical_key, row.id);
+  }
+
+  // 4. Prepare search candidates relation records
+  const relationRecords = input.candidates.map(candidate => {
+    const key = canonicalKey(candidate);
+    const candidateDbId = candidateIdMap.get(key);
+    if (!candidateDbId) {
+      throw new Error(`Failed to find database ID for candidate key: ${key}`);
+    }
+    return {
+      search_id: search.id,
+      candidate_id: candidateDbId,
+      score: candidate.score,
+      score_breakdown: candidate.scoreBreakdown as unknown as Json,
+      matched_skills: candidate.matchedSkills,
+      missing_skills: candidate.missingSkills,
+      skill_evidence: candidate.skillEvidence as unknown as Json,
+      decision_summary: candidate.decisionSummary,
+      red_flags: candidate.redFlags,
+      recommendation: candidateRecommendation(candidate),
+    };
+  });
+
+  // 5. Batch upsert relations
+  const { data: searchCandidates, error: relationError } = await supabase
+    .from("search_candidates")
+    .upsert(relationRecords, { onConflict: "search_id,candidate_id" })
+    .select("id, candidate_id");
+
+  if (relationError) throw relationError;
+  if (!searchCandidates) throw new Error("Failed to retrieve upserted search_candidates");
+
+  // Create a map from candidate_id to search_candidate_id
+  const searchCandIdMap = new Map<string, string>();
+  for (const row of searchCandidates) {
+    searchCandIdMap.set(row.candidate_id, row.id);
+  }
+
+  // 6. Prepare candidate sources and candidate events
+  const sourceRecords = [];
+  const eventRecords = [];
+
+  for (const candidate of input.candidates) {
+    const key = canonicalKey(candidate);
+    const candidateDbId = candidateIdMap.get(key);
+    const searchCandDbId = searchCandIdMap.get(candidateDbId || "");
+
+    if (candidateDbId) {
+      sourceRecords.push({
+        candidate_id: candidateDbId,
+        source_name: candidate.source || "web",
+        source_url: candidate.linkedin ?? null,
+        raw_payload: candidate as unknown as Json,
+      });
+
+      if (searchCandDbId) {
+        eventRecords.push({
+          candidate_id: candidateDbId,
+          search_candidate_id: searchCandDbId,
+          event_type: "created" as const,
+          message: `Kandidat hittades i sökning "${input.title}".`,
+          created_by: userId,
+        });
+      }
+    }
+  }
+
+  // 7. Batch insert sources
+  if (sourceRecords.length > 0) {
+    const { error: sourceError } = await supabase
+      .from("candidate_sources")
+      .insert(sourceRecords);
+    if (sourceError) throw sourceError;
+  }
+
+  // 8. Batch insert events
+  if (eventRecords.length > 0) {
+    const { error: eventError } = await supabase
+      .from("candidate_events")
+      .insert(eventRecords);
+    if (eventError) throw eventError;
+  }
+
+  return search.id;
 }
 
 export async function updateSearchCandidateStatus(

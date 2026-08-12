@@ -64,6 +64,7 @@ interface CandidateCardProps {
   onSelectedChange?: (selected: boolean) => void;
   onSaveToDb?: () => void;
   hoveredSkill?: string | null;
+  onOutreachClick?: (candidate: ScoredCandidate) => void;
 }
 
 export function CandidateCard({
@@ -83,6 +84,7 @@ export function CandidateCard({
   onSelectedChange,
   onSaveToDb,
   hoveredSkill = null,
+  onOutreachClick,
 }: CandidateCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [contactExpanded, setContactExpanded] = useState(false);
@@ -133,7 +135,7 @@ export function CandidateCard({
   const strokeDashoffset = ((100 - candidate.score) / 100) * 138;
 
   return (
-    <Card className={`border-0 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.12)] ${selected ? "ring-2 ring-primary" : ""} ${isHighlighted ? "ring-2 ring-primary bg-primary/5 shadow-[0_0_15px_rgba(95,200,145,0.35)] scale-[1.01]" : ""}`}>
+    <Card className={`border-0 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(95,200,145,0.15)] ${selected ? "ring-2 ring-primary shadow-[0_0_15px_rgba(95,200,145,0.2)]" : ""} ${isHighlighted ? "ring-2 ring-primary bg-primary/5 shadow-[0_0_15px_rgba(95,200,145,0.35)] scale-[1.01]" : ""}`}>
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
           {onSelectedChange && (
@@ -255,13 +257,20 @@ export function CandidateCard({
                 </div>
               )}
               {isAvailable(candidate.email) ? (
-                <a 
-                  href={`mailto:${candidate.email}?subject=${encodeURIComponent("Karriärsmöjlighet hos NEKTAB")}&body=${encodeURIComponent(getOutreachMessage(candidate, recruiterName))}`} 
-                  className="inline-flex items-center gap-1.5 border border-primary px-2.5 py-1 font-bold text-foreground hover:bg-primary/20"
-                  title="Mejla kandidat direkt med mall"
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onOutreachClick) {
+                      onOutreachClick(candidate);
+                    } else {
+                      window.location.href = `mailto:${candidate.email}?subject=${encodeURIComponent("Karriärsmöjlighet hos NEKTAB")}&body=${encodeURIComponent(getOutreachMessage(candidate, recruiterName))}`;
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 border border-primary px-2.5 py-1 font-bold text-foreground hover:bg-primary/20 bg-transparent cursor-pointer"
+                  title="Mejla kandidat med mall"
                 >
                   <Mail className="h-3.5 w-3.5 text-[#EA4335]" /> {candidate.email}
-                </a>
+                </button>
               ) : (
                 <div className="inline-flex items-center gap-1 text-muted-foreground text-xs">
                   <span className="flex items-center gap-1 border border-border px-2.5 py-1 bg-[#fafafa]">
@@ -343,7 +352,20 @@ export function CandidateCard({
               </div>
 
               <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={onCopyOutreach} className="h-9 gap-1 rounded-full border-primary text-xs font-bold bg-[#fafafa]" title="Kopiera outreach-meddelande till urklipp">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    if (onOutreachClick) {
+                      onOutreachClick(candidate);
+                    } else {
+                      onCopyOutreach?.();
+                    }
+                  }} 
+                  className="h-9 gap-1 rounded-full border-primary text-xs font-bold bg-[#fafafa]" 
+                  title="Öppna outreach-meddelande editor"
+                >
                   <Copy className="h-3.5 w-3.5" /> Kopiera meddelande
                 </Button>
                 <Button 
