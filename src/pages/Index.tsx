@@ -401,9 +401,12 @@ export default function Index() {
   const [sessionLoading, setSessionLoading] = useState(true);
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authMode, setAuthMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [authLoading, setAuthLoading] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
 
   const [quickProfile, setQuickProfile] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -575,6 +578,12 @@ export default function Index() {
 
   // 1. Session and auth listeners
   useEffect(() => {
+    // Check if the URL hash contains recovery token indications
+    const hash = window.location.hash || "";
+    if (hash.includes("type=recovery") || hash.includes("access_token=")) {
+      setRecoveryMode(true);
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setSessionLoading(false);
@@ -582,9 +591,12 @@ export default function Index() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setSessionLoading(false);
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryMode(true);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -620,6 +632,61 @@ export default function Index() {
       }
     } catch (err: any) {
       toast({ title: "Autentisering misslyckades", description: err.message, variant: "destructive" });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authEmail) {
+      toast({ title: "Fyll i din e-postadress", variant: "destructive" });
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
+        redirectTo: `${window.location.origin}${window.location.pathname}`,
+      });
+      if (error) throw error;
+      toast({ 
+        title: "Återställningslänk skickad!", 
+        description: "Kontrollera din e-post för en länk för att återställa ditt lösenord." 
+      });
+      setAuthMode("signin");
+    } catch (err: any) {
+      toast({ title: "Ett fel uppstod", description: err.message, variant: "destructive" });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !newPasswordConfirm) {
+      toast({ title: "Fyll i båda lösenordsfälten", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== newPasswordConfirm) {
+      toast({ title: "Lösenorden matchar inte", variant: "destructive" });
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast({ title: "Lösenordet måste vara minst 6 tecken", variant: "destructive" });
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Lösenordet har uppdaterats!", description: "Du är nu inloggad med ditt nya lösenord." });
+      setRecoveryMode(false);
+      setNewPassword("");
+      setNewPasswordConfirm("");
+      // Clean the URL hash
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } catch (err: any) {
+      toast({ title: "Kunde inte uppdatera lösenordet", description: err.message, variant: "destructive" });
     } finally {
       setAuthLoading(false);
     }
@@ -1391,8 +1458,8 @@ ${recruiterName || "NEKTAB"}`;
     );
   }
 
-  // 4. Render Auth Interface if no active session
-  if (!session) {
+  // 4. Render Recovery Interface
+  if (recoveryMode) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#1E252B] p-4 font-sans text-white">
         <div className="w-full max-w-md bg-[#252E38]/90 p-8 shadow-[0_12px_40px_rgba(0,0,0,0.25)] border border-white/5 relative overflow-hidden backdrop-blur-md">
@@ -1401,36 +1468,20 @@ ${recruiterName || "NEKTAB"}`;
             <img src="/nektab-logo-rgb.png" alt="NEKTAB" className="h-10 w-auto brightness-0 invert" />
             <p className="brand-kicker mt-6 text-primary tracking-[0.08em] uppercase text-xs font-bold">Candidate Intelligence</p>
             <h2 className="mt-2 text-2xl font-normal text-white">
-              {authMode === "signin" ? "Strategisk kompetenssökning" : "Skapa chefs-konto"}
+              Välj ett nytt lösenord
             </h2>
           </div>
 
-          <form onSubmit={handleAuth} className="mt-8 space-y-4">
-            {authMode === "signup" && (
-              <div className="space-y-1.5">
-                <label className="text-xs text-white/60 font-bold uppercase tracking-wider">Namn</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
-                  <input
-                    type="text"
-                    placeholder="Ditt namn"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="h-11 w-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm outline-none focus:border-primary focus:bg-white/10 transition-all text-white placeholder:text-white/30"
-                  />
-                </div>
-              </div>
-            )}
-
+          <form onSubmit={handleUpdatePassword} className="mt-8 space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs text-white/60 font-bold uppercase tracking-wider">E-post</label>
+              <label className="text-xs text-white/60 font-bold uppercase tracking-wider">Nytt Lösenord</label>
               <div className="relative">
-                <MailIcon className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
                 <input
-                  type="email"
-                  placeholder="namn@nektab.se"
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
+                  type="password"
+                  placeholder="Minst 6 tecken"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   className="h-11 w-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm outline-none focus:border-primary focus:bg-white/10 transition-all text-white placeholder:text-white/30"
                   required
                 />
@@ -1438,14 +1489,14 @@ ${recruiterName || "NEKTAB"}`;
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-white/60 font-bold uppercase tracking-wider">Lösenord</label>
+              <label className="text-xs text-white/60 font-bold uppercase tracking-wider">Bekräfta Nytt Lösenord</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
                 <input
                   type="password"
-                  placeholder="••••••••"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
+                  placeholder="Bekräfta lösenordet"
+                  value={newPasswordConfirm}
+                  onChange={(e) => setNewPasswordConfirm(e.target.value)}
                   className="h-11 w-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm outline-none focus:border-primary focus:bg-white/10 transition-all text-white placeholder:text-white/30"
                   required
                 />
@@ -1457,7 +1508,7 @@ ${recruiterName || "NEKTAB"}`;
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  {authMode === "signin" ? "Logga in" : "Registrera"}
+                  Spara nytt lösenord
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -1465,16 +1516,160 @@ ${recruiterName || "NEKTAB"}`;
           </form>
 
           <div className="mt-6 text-center text-xs text-white/50">
-            {authMode === "signin" ? (
+            <button 
+              type="button"
+              onClick={() => {
+                setRecoveryMode(false);
+                supabase.auth.signOut();
+                setSession(null);
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }} 
+              className="text-primary hover:underline font-bold"
+            >
+              Avbryt och gå till inloggning
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 5. Render Auth Interface if no active session
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#1E252B] p-4 font-sans text-white">
+        <div className="w-full max-w-md bg-[#252E38]/90 p-8 shadow-[0_12px_40px_rgba(0,0,0,0.25)] border border-white/5 relative overflow-hidden backdrop-blur-md">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary to-[#5FC891]/60" />
+          <div className="flex flex-col items-center text-center">
+            <img src="/nektab-logo-rgb.png" alt="NEKTAB" className="h-10 w-auto brightness-0 invert" />
+            <p className="brand-kicker mt-6 text-primary tracking-[0.08em] uppercase text-xs font-bold">Candidate Intelligence</p>
+            <h2 className="mt-2 text-2xl font-normal text-white">
+              {authMode === "signin" && "Strategisk kompetenssökning"}
+              {authMode === "signup" && "Skapa chefs-konto"}
+              {authMode === "forgot" && "Återställ lösenord"}
+            </h2>
+          </div>
+
+          {authMode === "forgot" ? (
+            <form onSubmit={handleForgotPassword} className="mt-8 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/60 font-bold uppercase tracking-wider">E-post</label>
+                <div className="relative">
+                  <MailIcon className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                  <input
+                    type="email"
+                    placeholder="namn@nektab.se"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className="h-11 w-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm outline-none focus:border-primary focus:bg-white/10 transition-all text-white placeholder:text-white/30"
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" disabled={authLoading} className="site-button w-full h-11 bg-primary text-black hover:bg-primary/95 font-bold mt-4 flex items-center justify-center gap-2 transition-all rounded-none">
+                {authLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Skicka återställningslänk
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleAuth} className="mt-8 space-y-4">
+              {authMode === "signup" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-white/60 font-bold uppercase tracking-wider">Namn</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                    <input
+                      type="text"
+                      placeholder="Ditt namn"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="h-11 w-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm outline-none focus:border-primary focus:bg-white/10 transition-all text-white placeholder:text-white/30"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/60 font-bold uppercase tracking-wider">E-post</label>
+                <div className="relative">
+                  <MailIcon className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                  <input
+                    type="email"
+                    placeholder="namn@nektab.se"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className="h-11 w-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm outline-none focus:border-primary focus:bg-white/10 transition-all text-white placeholder:text-white/30"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs text-white/60 font-bold uppercase tracking-wider">Lösenord</label>
+                  {authMode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode("forgot")}
+                      className="text-xs text-primary/80 hover:text-primary hover:underline font-bold focus:outline-none"
+                    >
+                      Glömt lösenordet?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className="h-11 w-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm outline-none focus:border-primary focus:bg-white/10 transition-all text-white placeholder:text-white/30"
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" disabled={authLoading} className="site-button w-full h-11 bg-primary text-black hover:bg-primary/95 font-bold mt-4 flex items-center justify-center gap-2 transition-all rounded-none">
+                {authLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    {authMode === "signin" ? "Logga in" : "Registrera"}
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
+
+          <div className="mt-6 text-center text-xs text-white/50">
+            {authMode === "signin" && (
               <p>
                 Saknar du konto?{" "}
                 <button onClick={() => setAuthMode("signup")} className="text-primary hover:underline font-bold">
                   Skapa ett här
                 </button>
               </p>
-            ) : (
+            )}
+            {authMode === "signup" && (
               <p>
                 Har du redan ett konto?{" "}
+                <button onClick={() => setAuthMode("signin")} className="text-primary hover:underline font-bold">
+                  Logga in här
+                </button>
+              </p>
+            )}
+            {authMode === "forgot" && (
+              <p>
+                Kommer du ihåg lösenordet?{" "}
                 <button onClick={() => setAuthMode("signin")} className="text-primary hover:underline font-bold">
                   Logga in här
                 </button>
