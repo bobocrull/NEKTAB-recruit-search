@@ -135,226 +135,116 @@ export function CandidateCard({
   const strokeDashoffset = ((100 - candidate.score) / 100) * 138;
 
   return (
-    <Card className={`border-0 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(95,200,145,0.15)] ${selected ? "ring-2 ring-primary shadow-[0_0_15px_rgba(95,200,145,0.2)]" : ""} ${isHighlighted ? "ring-2 ring-primary bg-primary/5 shadow-[0_0_15px_rgba(95,200,145,0.35)] scale-[1.01]" : ""}`}>
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
+    <Card className={`border border-border bg-white shadow-sm transition-all duration-300 hover:shadow-md ${selected ? "ring-1 ring-primary shadow-sm" : ""} ${isHighlighted ? "ring-2 ring-primary bg-primary/5 shadow-md scale-[1.01]" : ""}`}>
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start gap-3 sm:gap-4">
           {onSelectedChange && (
             <Checkbox
               checked={selected}
               onCheckedChange={(value) => onSelectedChange(value === true)}
               aria-label={`Välj ${candidate.name} för export`}
-              className="mt-4 h-5 w-5 shrink-0 border-primary data-[state=checked]:bg-primary data-[state=checked]:text-black"
+              className="mt-1.5 h-4 w-4 shrink-0 border-primary data-[state=checked]:bg-primary data-[state=checked]:text-black"
             />
           )}
 
-          {/* Premium Circular Match Score Ring around Avatar */}
-          <div className="relative flex items-center justify-center h-14 w-14 shrink-0">
-            {imageUrl ? (
-              <>
-                <img src={imageUrl} alt="" className="absolute h-9 w-9 rounded-full object-cover" />
-                <svg className="h-14 w-14 transform -rotate-90">
-                  <circle
-                    cx="28"
-                    cy="28"
-                    r="22"
-                    stroke="#f1f5f9"
-                    strokeWidth="2.5"
-                    fill="transparent"
-                  />
-                  <circle
-                    cx="28"
-                    cy="28"
-                    r="22"
-                    stroke={scoreStrokeColor(candidate.score)}
-                    strokeWidth="2.5"
-                    fill="transparent"
-                    strokeDasharray="138"
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </>
-            ) : (
-              <>
-                <svg className="h-14 w-14 transform -rotate-90">
-                  <circle
-                    cx="28"
-                    cy="28"
-                    r="22"
-                    stroke="#f1f5f9"
-                    strokeWidth="3.5"
-                    fill="transparent"
-                  />
-                  <circle
-                    cx="28"
-                    cy="28"
-                    r="22"
-                    stroke={scoreStrokeColor(candidate.score)}
-                    strokeWidth="3.5"
-                    fill="transparent"
-                    strokeDasharray="138"
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className={`absolute text-sm font-extrabold font-mono ${scoreColor(candidate.score)}`}>
-                  {candidate.score}
-                </span>
-              </>
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1 space-y-3 overflow-hidden">
+          <div className="min-w-0 flex-1 space-y-2.5 overflow-hidden">
+            {/* Header: Name, Score & Source */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="break-words text-lg font-bold text-foreground">{candidate.name}</h3>
-                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Briefcase className="h-3.5 w-3.5 shrink-0" />
+                <h3 className="break-words text-base sm:text-lg font-bold text-foreground flex flex-wrap items-center gap-2">
+                  <span>{candidate.name}</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase bg-muted/70 px-1.5 py-0.5 rounded">
+                    {candidate.sourceCategory || "Öppen webb"}
+                  </span>
+                </h3>
+                
+                {/* Role and Company */}
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground/80 mt-0.5">
+                  <Briefcase className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <span className="break-words">{candidate.currentRole} på {candidate.company}</span>
                 </p>
+
+                {/* Education */}
                 {candidate.education && (
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                     <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
                     <span className="break-words font-medium">{candidate.education}</span>
                   </p>
                 )}
               </div>
-              <div className={`text-xs font-mono font-extrabold uppercase px-2 py-0.5 rounded shrink-0 h-6 flex items-center ${scoreBg(candidate.score)} ${scoreColor(candidate.score)}`}>
+
+              {/* Match Score pill */}
+              <div className={`text-xs font-mono font-extrabold uppercase px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1 ${scoreBg(candidate.score)} ${scoreColor(candidate.score)}`}>
+                <Sparkles className="h-3 w-3" />
                 {candidate.score}% Match
               </div>
             </div>
 
+            {/* Core Metadata Row: Experience & Location */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{candidate.yearsOfExperience} års erfarenhet</span>
-              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{candidate.location}</span>
-              <span className="flex items-center gap-1"><Database className="h-3 w-3" />{candidate.sourceCategory || "Öppen webb"}</span>
-              {networkSignals.length > 0 && (
-                <span className="flex items-center gap-1 font-bold text-foreground">
-                  <Network className="h-3 w-3" />{networkSignals.length} nätverkssignaler
-                </span>
-              )}
-              <span className={`inline-flex items-center px-2 font-bold ${confidenceColor}`}>
-                Datakvalitet: {candidate.dataConfidence.level}
-              </span>
-              <span className="inline-flex items-center bg-primary/10 px-2 font-bold text-foreground">
-                Kontaktbar: {contactSignals.length}/3{contactSignals.length > 0 ? ` (${contactSignals.join(", ")})` : ""}
-              </span>
+              <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-muted-foreground/70" /> {candidate.yearsOfExperience} år</span>
+              <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5 text-muted-foreground/70" /> {candidate.location}</span>
+              
+              {/* Inline Active Contact Icons (only if available) */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                {linkedInUrl && (
+                  <a href={linkedInUrl} target="_blank" rel="noopener noreferrer" className="p-1 rounded-full hover:bg-muted text-[#0A66C2] transition-colors" title="Öppna LinkedIn">
+                    <Linkedin className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {isAvailable(candidate.email) && (
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onOutreachClick) {
+                        onOutreachClick(candidate);
+                      } else {
+                        window.location.href = `mailto:${candidate.email}?subject=${encodeURIComponent("Karriärsmöjlighet hos NEKTAB")}&body=${encodeURIComponent(getOutreachMessage(candidate, recruiterName))}`;
+                      }
+                    }} 
+                    className="p-1 rounded-full hover:bg-muted text-[#EA4335] transition-colors" 
+                    title="Skicka e-post"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {isAvailable(candidate.phone) && (
+                  <a href={`tel:${candidate.phone}`} className="p-1 rounded-full hover:bg-muted text-[#34A853] transition-colors" title="Ring telefon">
+                    <Phone className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 text-xs pt-1">
-              {linkedInUrl ? (
-                <a href={linkedInUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 border border-primary px-2.5 py-1 font-bold text-foreground hover:bg-primary/20">
-                  <Linkedin className="h-3.5 w-3.5 text-[#0A66C2]" /> LinkedIn
-                </a>
-              ) : (
-                <div className="inline-flex items-center gap-1 text-muted-foreground text-xs">
-                  <span className="flex items-center gap-1 border border-border px-2.5 py-1 bg-[#fafafa]">
-                    <Linkedin className="h-3.5 w-3.5" /> LinkedIn saknas
-                  </span>
-                  <a 
-                    href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${candidate.name} ${candidate.company}`)}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center justify-center p-1 border border-primary text-foreground hover:bg-primary/20 hover:text-primary transition-all h-[26px] w-[26px]"
-                    title="Sök efter kandidat på LinkedIn"
-                  >
-                    <Search className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
-              {isAvailable(candidate.email) ? (
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (onOutreachClick) {
-                      onOutreachClick(candidate);
-                    } else {
-                      window.location.href = `mailto:${candidate.email}?subject=${encodeURIComponent("Karriärsmöjlighet hos NEKTAB")}&body=${encodeURIComponent(getOutreachMessage(candidate, recruiterName))}`;
-                    }
-                  }}
-                  className="inline-flex items-center gap-1.5 border border-primary px-2.5 py-1 font-bold text-foreground hover:bg-primary/20 bg-transparent cursor-pointer"
-                  title="Mejla kandidat med mall"
-                >
-                  <Mail className="h-3.5 w-3.5 text-[#EA4335]" /> {candidate.email}
-                </button>
-              ) : (
-                <div className="inline-flex items-center gap-1 text-muted-foreground text-xs">
-                  <span className="flex items-center gap-1 border border-border px-2.5 py-1 bg-[#fafafa]">
-                    <Mail className="h-3.5 w-3.5" /> E-post saknas
-                  </span>
-                  <a 
-                    href={`https://www.google.com/search?q=${encodeURIComponent(`"${candidate.name}" "${candidate.company}" email OR epost`)}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center justify-center p-1 border border-primary text-foreground hover:bg-primary/20 hover:text-primary transition-all h-[26px] w-[26px]"
-                    title="Sök efter e-post på Google"
-                  >
-                    <Search className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
-              {isAvailable(candidate.phone) ? (
-                <a href={`tel:${candidate.phone}`} className="inline-flex items-center gap-1.5 border border-primary px-2.5 py-1 font-bold text-foreground hover:bg-primary/20">
-                  <Phone className="h-3.5 w-3.5 text-[#34A853]" /> {candidate.phone}
-                </a>
-              ) : (
-                <div className="inline-flex items-center gap-1 text-muted-foreground text-xs">
-                  <span className="flex items-center gap-1 border border-border px-2.5 py-1 bg-[#fafafa]">
-                    <Phone className="h-3.5 w-3.5" /> Telefon saknas
-                  </span>
-                  <a 
-                    href={`https://www.google.com/search?q=${encodeURIComponent(`"${candidate.name}" "${candidate.company}" telefon OR mobil OR nummer OR phone`)}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center justify-center p-1 border border-primary text-foreground hover:bg-primary/20 hover:text-primary transition-all h-[26px] w-[26px]"
-                    title="Sök efter telefonnummer på Google"
-                  >
-                    <Search className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {(criticalFlags.length > 0 || feedback) && (
+            {/* Critical Flags at top level (if any) */}
+            {criticalFlags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {criticalFlags.map((flag) => (
-                  <Badge key={flag} variant="outline" className="gap-1 rounded-none border-amber-300 bg-amber-50/50 text-xs font-bold text-amber-700 px-2 py-0.5">
-                    <AlertTriangle className="h-3 w-3 text-amber-600" /> {flag}
+                  <Badge key={flag} variant="outline" className="gap-1 rounded-none border-amber-300 bg-amber-50/50 text-[10px] font-bold text-amber-700 px-2 py-0.5">
+                    <AlertTriangle className="h-2.5 w-2.5 text-amber-600" /> {flag}
                   </Badge>
                 ))}
-                {feedback && (
-                  <Badge variant="outline" className="rounded-none text-xs font-bold bg-[#fafafa]">
-                    Feedback: {feedback}
-                  </Badge>
-                )}
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2 items-center justify-between pt-1 border-t border-dashed border-border mt-3">
+            {/* Bottom Actions Bar */}
+            <div className="flex flex-wrap gap-2 items-center justify-between pt-2 border-t border-border/60 mt-2">
               <div className="flex flex-wrap gap-2 items-center">
                 <select
                   value={pipelineStatus}
                   onChange={(event) => onPipelineChange?.(event.target.value as PipelineStatus)}
-                  className="h-9 border border-border bg-white px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
+                  className="h-8 border border-border bg-white rounded-md px-2 text-xs font-semibold text-foreground outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
                 >
                   {PIPELINE_STATUSES.map((status) => (
                     <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
-                <select
-                  value={feedback || ""}
-                  onChange={(event) => {
-                    if (event.target.value) {
-                      onFeedbackChange?.(event.target.value as FeedbackTag);
-                    }
-                  }}
-                  className="h-9 border border-border bg-white px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
-                >
-                  <option value="">Feedback</option>
-                  {FEEDBACK_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+                
+                {feedback && (
+                  <Badge variant="outline" className="rounded-full text-[10px] font-bold py-0.5 px-2 bg-slate-50 border-slate-200">
+                    Feedback: {feedback}
+                  </Badge>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -362,36 +252,94 @@ export function CandidateCard({
                   type="button" 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => {
-                    if (onOutreachClick) {
-                      onOutreachClick(candidate);
-                    } else {
-                      onCopyOutreach?.();
-                    }
-                  }} 
-                  className="h-9 gap-1 rounded-full border-primary text-xs font-bold bg-[#fafafa]" 
-                  title="Öppna outreach-meddelande editor"
+                  onClick={() => onOutreachClick ? onOutreachClick(candidate) : onCopyOutreach?.()} 
+                  className="h-8 gap-1.5 rounded-md border-primary/40 hover:border-primary text-xs font-semibold hover:bg-primary/5 transition-all"
                 >
-                  <Copy className="h-3.5 w-3.5" /> Kopiera meddelande
+                  <Copy className="h-3 w-3" /> Outreach
                 </Button>
                 <Button 
                   type="button" 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setIsExpanded(!isExpanded)} 
-                  className="h-9 gap-1 text-xs font-bold text-primary hover:text-primary/80"
+                  className="h-8 gap-0.5 text-xs font-semibold text-primary hover:text-primary/80 hover:bg-transparent"
                 >
                   {isExpanded ? (
-                    <><ChevronUp className="h-4 w-4" /> Dölj analys</>
+                    <><ChevronUp className="h-3.5 w-3.5" /> Stäng</>
                   ) : (
-                    <><ChevronDown className="h-4 w-4" /> Visa analys & anteckningar</>
+                    <><ChevronDown className="h-3.5 w-3.5" /> Detaljer</>
                   )}
                 </Button>
               </div>
             </div>
 
+            {/* Expanded Content Area */}
             {isExpanded && (
-              <div className="space-y-4 pt-4 border-t border-border mt-3 animate-fade-in">
+              <div className="space-y-4 pt-4 border-t border-border mt-3 animate-fade-in text-sm">
+                
+                {/* Row: Feedback Selector & Quality info */}
+                <div className="flex flex-wrap gap-4 items-center justify-between bg-muted/40 p-2.5 rounded-lg border border-border/50 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground">Kategorisera feedback:</span>
+                    <select
+                      value={feedback || ""}
+                      onChange={(event) => onFeedbackChange?.(event.target.value as FeedbackTag)}
+                      className="h-8 border border-border bg-white rounded-md px-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
+                    >
+                      <option value="">Ingen feedback vald</option>
+                      {FEEDBACK_OPTIONS.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="text-muted-foreground">
+                    Datakvalitet {candidate.dataConfidence.score}/100: <span className="font-bold text-foreground">{candidate.dataConfidence.level}</span>
+                  </div>
+                </div>
+
+                {/* Missing Contact details Search helpers (only if missing) */}
+                {(!linkedInUrl || !isAvailable(candidate.email) || !isAvailable(candidate.phone)) && (
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/40 text-xs space-y-2">
+                    <p className="font-bold text-foreground/80 flex items-center gap-1.5">
+                      <Search className="h-3 w-3 text-muted-foreground" />
+                      Sök saknade uppgifter på webben
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-0.5">
+                      {!linkedInUrl && (
+                        <a 
+                          href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${candidate.name} ${candidate.company}`)}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center gap-1 bg-white border border-border px-2.5 py-1 text-foreground hover:bg-muted font-medium transition-colors"
+                        >
+                          Sök LinkedIn
+                        </a>
+                      )}
+                      {!isAvailable(candidate.email) && (
+                        <a 
+                          href={`https://www.google.com/search?q=${encodeURIComponent(`"${candidate.name}" "${candidate.company}" email OR epost`)}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center gap-1 bg-white border border-border px-2.5 py-1 text-foreground hover:bg-muted font-medium transition-colors"
+                        >
+                          Sök E-post
+                        </a>
+                      )}
+                      {!isAvailable(candidate.phone) && (
+                        <a 
+                          href={`https://www.google.com/search?q=${encodeURIComponent(`"${candidate.name}" "${candidate.company}" telefon OR mobil OR nummer OR phone`)}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center gap-1 bg-white border border-border px-2.5 py-1 text-foreground hover:bg-muted font-medium transition-colors"
+                        >
+                          Sök Telefon
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Sökobservationer (insights) */}
                 {insightFlags.length > 0 && (
                   <div className="space-y-1">
@@ -414,10 +362,14 @@ export function CandidateCard({
                   </div>
                 )}
 
-                <div className="border-l-4 border-primary bg-primary/5 p-3 text-sm font-bold text-foreground">
-                  {candidate.decisionSummary}
-                </div>
+                {/* Decision Summary */}
+                {candidate.decisionSummary && (
+                  <div className="border-l-4 border-primary bg-primary/5 p-3 text-sm font-bold text-foreground">
+                    {candidate.decisionSummary}
+                  </div>
+                )}
 
+                {/* Score Summary breakdown box */}
                 <div className="grid gap-2 border border-border bg-[#fafafa] p-3 text-xs md:grid-cols-2">
                   <div>
                     <p className="font-bold text-foreground">Starkast signal</p>
@@ -433,6 +385,7 @@ export function CandidateCard({
                   </div>
                 </div>
 
+                {/* Action Buttons Row */}
                 <div className="flex flex-wrap gap-2">
                   <a
                     href={publicSearchUrl}
@@ -461,6 +414,7 @@ export function CandidateCard({
                   </Button>
                 </div>
 
+                {/* Chefens anteckningar */}
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-foreground">Chefens anteckningar</p>
                   <textarea
@@ -471,6 +425,7 @@ export function CandidateCard({
                   />
                 </div>
 
+                {/* Competencies */}
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-foreground">Kompetenser</p>
                   <div className="flex flex-wrap gap-1.5">
@@ -492,6 +447,7 @@ export function CandidateCard({
 
                 <p className="text-sm leading-relaxed text-muted-foreground">{candidate.explanation}</p>
 
+                {/* Matched vs Missing details */}
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="border border-primary/20 bg-primary/5 p-3">
                     <p className="brand-kicker text-primary">Matchade krav</p>
@@ -530,6 +486,7 @@ export function CandidateCard({
                   </div>
                 </div>
 
+                {/* Poängfördelning & sources */}
                 {!compact && candidate.skillEvidence.length > 0 && (
                   <div className="border border-border bg-white p-3">
                     <p className="brand-kicker text-primary">Var matchningen hittades</p>
