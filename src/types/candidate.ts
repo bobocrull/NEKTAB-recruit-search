@@ -17,6 +17,7 @@ export interface Candidate {
   networkSignals?: CandidateNetworkSignal[];
   evidenceSnippets?: string[];
   integrationStatus?: "Ej exporterad" | "Redo för export" | "Exporterad" | "Skickad till Cinode";
+  education?: string;
 }
 
 export type CandidateSourceCategory =

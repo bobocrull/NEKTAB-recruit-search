@@ -77,6 +77,31 @@ function saveLocalCandidates(candidates: any[]) {
   localStorage.setItem("nektab-local-candidates", JSON.stringify(candidates.slice(0, 1000)));
 }
 
+function extractEducationFromText(summary: string, role: string, company: string): string {
+  const combined = `${summary} ${role} ${company}`;
+  if (!combined.trim()) return "";
+  
+  const eduKeywords = /(kth|royal institute of technology|chalmers|liu|linköpings universitet|luleå tekniska universitet|ltu|uppsala universitet|lunds universitet|lth|göteborgs universitet|karlstads universitet|mälardalens universitet|mdu|högskolan i [a-zåäö]+|yh-utbildning|nackademin|jensen|yrkeshögskola|alumni)/i;
+  const degreeKeywords = /(civilingenjör|högskoleingenjör|master of science|m\.sc|b\.sc|kandidatexamen|masterexamen|elkraftsingenjör|elkraftsingenjörsutbildning|beredareutbildning|energiingenjör)/i;
+
+  const sentences = combined.split(/[.!?\n]|\s{2,}/);
+  let bestMatch = "";
+  
+  for (const sentence of sentences) {
+    const s = sentence.trim();
+    if (!s) continue;
+    
+    if (eduKeywords.test(s) && degreeKeywords.test(s)) {
+      return s;
+    }
+    if (!bestMatch && (eduKeywords.test(s) || degreeKeywords.test(s))) {
+      bestMatch = s;
+    }
+  }
+  
+  return bestMatch;
+}
+
 function readLocalShortlist(): ScoredCandidate[] {
   try {
     const stored = localStorage.getItem("nektab-local-shortlist");
@@ -463,6 +488,7 @@ export default function Index() {
   const [newCandLinkedin, setNewCandLinkedin] = useState("");
   const [newCandEmail, setNewCandEmail] = useState("");
   const [newCandPhone, setNewCandPhone] = useState("");
+  const [newCandEducation, setNewCandEducation] = useState("");
 
   const { toast } = useToast();
 
@@ -824,7 +850,8 @@ export default function Index() {
             profile_image_url: c.profileImageUrl || "",
             summary: c.summary || "",
             source: c.source || "Web",
-            sourceCategory: c.sourceCategory || (c.linkedin?.includes("linkedin.com") ? "LinkedIn" : "Öppen webb")
+            sourceCategory: c.sourceCategory || (c.linkedin?.includes("linkedin.com") ? "LinkedIn" : "Öppen webb"),
+            education: c.education || ""
           }));
         }
       } else {
@@ -861,7 +888,8 @@ export default function Index() {
       source: linkedinUrl || "Web",
       sourceCategory: "Intern databas" as any,
       evidenceSnippets: [],
-      networkSignals: []
+      networkSignals: [],
+      education: candidate.education || ""
     };
 
     const currentLocalCands = readLocalCandidates();
@@ -881,7 +909,12 @@ export default function Index() {
         linkedin_url: linkedinUrl || null,
         email: candidate.email === "Klicka för att hämta" ? null : candidate.email,
         phone: candidate.phone === "Klicka för att hämta" ? null : candidate.phone,
-        data_confidence: { level: "Hög", score: 85, reasons: ["Hämtad från extern sökning"] } as any,
+        data_confidence: { 
+          level: "Hög", 
+          score: 85, 
+          reasons: ["Hämtad från extern sökning"],
+          education: candidate.education || ""
+        } as any,
         last_seen_at: new Date().toISOString()
       }, { onConflict: "canonical_key" });
       
@@ -932,7 +965,8 @@ export default function Index() {
             source: c.linkedin_url || "Intern databas",
             sourceCategory: "Intern databas" as any,
             evidenceSnippets: [],
-            networkSignals: []
+            networkSignals: [],
+            education: c.data_confidence?.education || ""
           }));
         } else {
           throw new Error("Supabase tables not initialized");
@@ -965,7 +999,8 @@ export default function Index() {
           source: c.linkedin_url || "Web",
           sourceCategory: c.sourceCategory,
           evidenceSnippets: [],
-          networkSignals: []
+          networkSignals: [],
+          education: c.education || extractEducationFromText(c.summary || "", c.current_role || "", c.company || "")
         }));
       } catch (webErr: any) {
         console.warn("Free web search failed, using local only", webErr);
@@ -1281,7 +1316,8 @@ ${recruiterName || "NEKTAB"}`;
       source: newCandLinkedin.trim() || "Manuell registrering",
       sourceCategory: "Intern databas" as any,
       evidenceSnippets: [],
-      networkSignals: []
+      networkSignals: [],
+      education: newCandEducation.trim() || ""
     };
 
     // Save to localStorage pool (always acts as cache)
@@ -1303,7 +1339,12 @@ ${recruiterName || "NEKTAB"}`;
         linkedin_url: newCandLinkedin.trim() || null,
         email: newCandEmail.trim() || null,
         phone: newCandPhone.trim() || null,
-        data_confidence: { level: "Hög", score: 90, reasons: ["Manuell registrering"] } as any,
+        data_confidence: { 
+          level: "Hög", 
+          score: 90, 
+          reasons: ["Manuell registrering"],
+          education: newCandEducation.trim() || ""
+        } as any,
         last_seen_at: new Date().toISOString()
       }, { onConflict: "canonical_key" });
       if (!error) dbSuccess = true;
@@ -1321,6 +1362,7 @@ ${recruiterName || "NEKTAB"}`;
     setNewCandLinkedin("");
     setNewCandEmail("");
     setNewCandPhone("");
+    setNewCandEducation("");
     setShowAddForm(false);
     
     if (showDatabaseOnly) {
@@ -1356,6 +1398,11 @@ ${recruiterName || "NEKTAB"}`;
         const linkedinIdx = headers.indexOf("linkedin");
         const emailIdx = headers.indexOf("e-post");
         const phoneIdx = headers.indexOf("telefon");
+        const eduIdx = headers.indexOf("utbildning") !== -1 
+          ? headers.indexOf("utbildning") 
+          : headers.indexOf("skola") !== -1 
+            ? headers.indexOf("skola") 
+            : headers.indexOf("utbildning/skola");
 
         if (nameIdx === -1) {
           toast({ title: "CSV saknar 'Namn'-kolumn", variant: "destructive" });
@@ -1382,6 +1429,7 @@ ${recruiterName || "NEKTAB"}`;
           const linkedin = linkedinIdx !== -1 ? cells[linkedinIdx] : "";
           const email = emailIdx !== -1 ? cells[emailIdx] : "";
           const phone = phoneIdx !== -1 ? cells[phoneIdx] : "";
+          const education = eduIdx !== -1 ? cells[eduIdx] : "";
 
           const canonicalKey = linkedin.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "") || 
             `${name.toLowerCase().replace(/\s+/g, "").trim()}|${company.toLowerCase().replace(/\s+/g, "").trim()}`;
@@ -1403,7 +1451,8 @@ ${recruiterName || "NEKTAB"}`;
             source: linkedin || "CSV Bulk Import",
             sourceCategory: "Intern databas" as any,
             evidenceSnippets: [],
-            networkSignals: []
+            networkSignals: [],
+            education
           };
 
           importedList.push(candObj);
@@ -1421,7 +1470,12 @@ ${recruiterName || "NEKTAB"}`;
               linkedin_url: linkedin || null,
               email: email || null,
               phone: phone || null,
-              data_confidence: { level: "Hög", score: 80, reasons: ["CSV-import"] } as any,
+              data_confidence: { 
+                level: "Hög", 
+                score: 80, 
+                reasons: ["CSV-import"],
+                education: education || ""
+              } as any,
               last_seen_at: new Date().toISOString()
             }, { onConflict: "canonical_key" });
           } catch (e) {}
@@ -1787,6 +1841,7 @@ ${recruiterName || "NEKTAB"}`;
                     <input value={newCandLinkedin} onChange={e => setNewCandLinkedin(e.target.value)} placeholder="LinkedIn URL" className="h-10 border border-border bg-white px-3 text-sm outline-none" />
                     <input value={newCandEmail} onChange={e => setNewCandEmail(e.target.value)} type="email" placeholder="E-post" className="h-10 border border-border bg-white px-3 text-sm outline-none" />
                     <input value={newCandPhone} onChange={e => setNewCandPhone(e.target.value)} placeholder="Telefon" className="h-10 border border-border bg-white px-3 text-sm outline-none" />
+                    <input value={newCandEducation} onChange={e => setNewCandEducation(e.target.value)} placeholder="Utbildning (t.ex. Civilingenjör, KTH)" className="h-10 border border-border bg-white px-3 text-sm outline-none md:col-span-2" />
                     <textarea value={newCandSkills} onChange={e => setNewCandSkills(e.target.value)} placeholder="Kompetenser (separera med kommatecken, t.ex. CAD, Luftledning, Beredning)" className="h-20 border border-border bg-white p-3 text-sm outline-none md:col-span-2" />
                     <Button type="submit" className="site-button bg-primary text-black hover:bg-primary/95 font-bold md:col-span-2">Spara profil</Button>
                   </form>

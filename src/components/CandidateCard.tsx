@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, Briefcase, Clock, Database, Mail, Phone, Linkedin, Download, ChevronDown, ChevronUp, Copy, AlertTriangle, Search, Sparkles, Network, FileSearch } from "lucide-react";
+import { MapPin, Briefcase, Clock, Database, Mail, Phone, Linkedin, Download, ChevronDown, ChevronUp, Copy, AlertTriangle, Search, Sparkles, Network, FileSearch, GraduationCap } from "lucide-react";
 
 type PipelineStatus = "Ny" | "Intressant" | "Kontakta" | "Avvakta" | "Ej relevant" | "Skickad till Cinode";
 type FeedbackTag = "Relevant" | "Inte relevant" | "Fel bransch" | "För junior" | "Fel geografi" | "Saknar nyckelkompetens";
@@ -212,6 +212,12 @@ export function CandidateCard({
                   <Briefcase className="h-3.5 w-3.5 shrink-0" />
                   <span className="break-words">{candidate.currentRole} på {candidate.company}</span>
                 </p>
+                {candidate.education && (
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                    <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="break-words font-medium">{candidate.education}</span>
+                  </p>
+                )}
               </div>
               <div className={`text-xs font-mono font-extrabold uppercase px-2 py-0.5 rounded shrink-0 h-6 flex items-center ${scoreBg(candidate.score)} ${scoreColor(candidate.score)}`}>
                 {candidate.score}% Match
