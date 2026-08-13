@@ -11,6 +11,7 @@ import { AuthOverlay } from "@/components/AuthOverlay";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { CompareCandidatesModal } from "@/components/CompareCandidatesModal";
 import { OutreachEditor } from "@/components/OutreachEditor";
+import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 
 const supabase = supabaseClient as any;
 import { Search, Loader2, AlertCircle, Download, BookmarkPlus, BookmarkCheck, Trash2, ShieldCheck, ExternalLink, Save, History, FileText, Lock, Mail as MailIcon, LogOut, Check, ArrowRight, User, Plus, Upload, X, Database, Award } from "lucide-react";
@@ -1697,12 +1698,19 @@ ${recruiterName || "NEKTAB"}`;
             <a className="site-nav-link text-foreground" href="https://nektab.se/vad-vi-gor/">Vad vi gör</a>
             <a className="site-nav-link text-foreground" href="https://nektab.se/karriar/">Karriär</a>
             <a className="site-nav-link text-foreground" href="https://nektab.se/bli-var-partner/">Bli vår partner</a>
-            <button
-              onClick={handleSignOut}
-              className="site-nav-link text-foreground flex items-center gap-1.5 font-bold hover:text-primary transition-all"
-            >
-              <LogOut className="h-4 w-4" /> Logga ut
-            </button>
+            <UserProfileDropdown
+              session={session}
+              onSignOut={handleSignOut}
+              onShowSaved={() => {
+                setShowDatabaseOnly(true);
+                // Scroll down to the results area where candidates are displayed
+                const resultsSection = document.getElementById("search-results-section");
+                if (resultsSection) {
+                  resultsSection.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+              supabase={supabase}
+            />
           </nav>
         </div>
       </header>
@@ -1964,7 +1972,7 @@ ${recruiterName || "NEKTAB"}`;
         </section>
 
         {(requirements || webResults.length > 0 || shortlist.length > 0 || showDatabaseOnly || searchError) && (
-          <section className="site-section relative -mt-10 bg-[#f5f5f2] pt-20 pb-20">
+          <section id="search-results-section" className="site-section relative -mt-10 bg-[#f5f5f2] pt-20 pb-20">
             <div className={`container grid gap-7 ${showSidePanel ? "lg:grid-cols-[330px_minmax(0,1fr)]" : "lg:grid-cols-1"}`}>
               {showSidePanel && (
                 <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start transition-all">
