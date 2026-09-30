@@ -2,7 +2,197 @@ import type { Candidate } from "@/types/candidate";
 import type { JobRequirements } from "@/lib/matchingLogic";
 
 export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
-  // --- Beredare & Nätplanerare ---
+  // ==========================================
+  // 1. Mark & Tillstånd / Markförhandlare
+  // ==========================================
+  {
+    id: "pool-mark-1",
+    name: "Karin Lindberg",
+    currentRole: "Senior Mark- och tillståndshandläggare",
+    company: "Svenska kraftnät",
+    yearsOfExperience: 9,
+    skills: ["Ledningsrätt", "Nätkoncession", "Miljöbalken", "Fastighetsrätt", "Tillståndsprövning", "Lantmäteriförrättning", "Samrådsprocesser", "Markåtkomst"],
+    location: "Stockholm",
+    source: "https://www.linkedin.com/in/karin-lindberg-mark-tillstand",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Karin%20Lindberg%20Svenska%20kraftn%C3%A4t%20tillst%C3%A5nd",
+    education: "Civilingenjör Lantmäteri (Fastighetsrätt), KTH",
+    summary: "Senior handläggare med spetskompetens inom nätkoncessioner linje/område, samråd med Länsstyrelsen och ledningsrättsförrättningar för transmissionsnät.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-mark-2",
+    name: "Per Wallin",
+    currentRole: "Markförhandlare & Markåtkomstansvarig",
+    company: "Vattenfall Eldistribution",
+    yearsOfExperience: 8,
+    skills: ["Markförhandling", "Markägaravtal", "Markåtkomst", "Fastighetsrätt", "LRF-normer", "Intrångsersättning", "Skogsbruksvärdering", "EBR Markåtkomst"],
+    location: "Göteborg",
+    source: "https://www.linkedin.com/in/per-wallin-markforhandlare",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Per%20Wallin%20Vattenfall%20markf%C3%B6rhandlare",
+    education: "Fastighetsrätt & Samhällsbyggnad, Lunds Tekniska Högskola (LTH)",
+    summary: "Erfaren markförhandlare specialiserad på markägardialog, intrångsavtal och förhandling med skogs- och lantbrukare inför regionnätsombyggnader.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-mark-3",
+    name: "Elin Almkvist",
+    currentRole: "Mark- och tillståndskoordinator",
+    company: "NEKTAB",
+    yearsOfExperience: 5,
+    skills: ["Markåtkomst", "Ledningsrätt", "Tillståndsprövning", "Fastighetsbildningslagen", "Markägardialog", "Lantmäteriet", "EBR", "dpPower"],
+    location: "Karlstad",
+    source: "https://www.linkedin.com/in/elin-almkvist-nektab",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Elin%20Almkvist%20NEKTAB%20mark",
+    education: "Lantmätare / Samhällsbyggnad, Karlstads Universitet",
+    summary: "Engagerad koordinator som driver tillståndsansökningar, servitut och lantmäteriprocesser i nära samverkan med beredare och nätägare.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-mark-4",
+    name: "Tomas Nordin",
+    currentRole: "Markförhandlare Regionnät",
+    company: "Ellevio",
+    yearsOfExperience: 7,
+    skills: ["Markförhandling", "Markägaravtal", "Ledningsrätt", "Skogsavtal", "Lantmäteriförrättning", "Avtalsjuridik", "SSAB/LRF-normer"],
+    location: "Örebro",
+    source: "https://www.linkedin.com/in/tomas-nordin-mark",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Tomas%20Nordin%20Ellevio%20mark",
+    education: "Skogsmästare & Skoglig fastighetsvärdering, SLU",
+    summary: "Markförhandlare med djup förståelse för skoglig markvärdering och framgångsrik dialog med markägare vid nätutbyggnad.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-mark-5",
+    name: "Sofia Hellström",
+    currentRole: "Tillståndsspecialist Nätkoncessioner",
+    company: "Sweco",
+    yearsOfExperience: 6,
+    skills: ["Nätkoncession linje", "Miljöbalken", "MKB", "Samråd", "Länsstyrelsekontakter", "Tillståndsärenden", "Ledningsrätt"],
+    location: "Sundsvall",
+    source: "https://www.linkedin.com/in/sofia-hellstrom-tillstand",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Sofia%20Hellstr%C3%B6m%20Sweco%20tillst%C3%A5nd",
+    education: "Juristexamen (Miljö- och förvaltningsrätt), Umeå Universitet",
+    summary: "Tillståndsexpert med fokus på koncessionsansökningar till Energimarknadsinspektionen (Ei) och strategiska samrådsprocesser.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+
+  // ==========================================
+  // 2. Stationsprojektörer & Ställverkskonstruktörer
+  // ==========================================
+  {
+    id: "pool-stat-1",
+    name: "Anders Vikström",
+    currentRole: "Senior Stationsprojektör 130/400 kV",
+    company: "NEKTAB",
+    yearsOfExperience: 9,
+    skills: ["Stationsprojektering", "Ställverk 130-400 kV", "Primärkonstruktion", "Apparatval", "Jordningsberäkningar", "Transformatorer", "EBR", "Tekniska specifikationer"],
+    location: "Stockholm",
+    source: "https://www.linkedin.com/in/anders-vikstrom-stationsprojektor",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Anders%20Vikstr%C3%B6m%20NEKTAB%20station",
+    education: "Civilingenjör Elektroteknik, KTH",
+    summary: "Senior stationsprojektör som leder projektering av transformator- och kopplingsstationer från förstudie till färdig bygghandling.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-stat-2",
+    name: "Camilla Berg",
+    currentRole: "Stationsprojektör & Layoutansvarig",
+    company: "Hitachi Energy",
+    yearsOfExperience: 7,
+    skills: ["Stationsprojektering", "CAD", "AutoCAD", "3D-modellering", "Ställverksbyggnader", "Primärapparater", "Jordningsnät", "Ställverk"],
+    location: "Västerås",
+    source: "https://www.linkedin.com/in/camilla-berg-hitachi",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Camilla%20Berg%20Hitachi%20Energy%20station",
+    education: "Högskoleingenjör Elektroteknik, Mälardalens Universitet",
+    summary: "Projekterar layouter, apparatplaceringar och fundament för transformatorstationer med fokus på säkerhet och framtida expansion.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-stat-3",
+    name: "Mattias Lundqvist",
+    currentRole: "Stationskonstruktör & Projekteringsledare",
+    company: "Linjemontage",
+    yearsOfExperience: 8,
+    skills: ["Stationsprojektering", "Fördelningsstationer", "Primärkonstruktion", "Sekundärkonstruktion", "130 kV", "Bygghandlingar", "EBR", "Upphandling"],
+    location: "Göteborg",
+    source: "https://www.linkedin.com/in/mattias-lundqvist-linjemontage",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Mattias%20Lundqvist%20Linjemontage%20station",
+    education: "Civilingenjör Elektroteknik, Chalmers Tekniska Högskola",
+    summary: "Projekteringsledare för totalentreprenader avseende nybyggnation och modernisering av 50-130 kV fördelningsstationer.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-stat-4",
+    name: "Helena Sjöberg",
+    currentRole: "Stationsprojektör Sekundärsystem",
+    company: "Omexom",
+    yearsOfExperience: 6,
+    skills: ["Sekundärprojektering", "Kontrollanläggningar", "Kretsscheman", "Reläskydd", "Apparatskåp", "CAD", "Stationsautomation", "IEC 61850"],
+    location: "Malmö",
+    source: "https://www.linkedin.com/in/helena-sjoberg-omexom",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Helena%20Sj%C3%B6berg%20Omexom%20sekund%C3%A4r",
+    education: "Högskoleingenjör Elkraft, Lunds Tekniska Högskola (LTH)",
+    summary: "Specialiserad stationsprojektör inom sekundärsystem, apparatskåpskonstruktion och samordning med reläskyddstekniker.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-stat-5",
+    name: "Fredrik Hallin",
+    currentRole: "Primärprojektör Transformatorstationer",
+    company: "Rejlers",
+    yearsOfExperience: 5,
+    skills: ["Primärprojektering", "Ställverk", "Högspänningsapparater", "Effektbrytare", "Frånskiljare", "Kabeldimensionering", "CAD", "EBR"],
+    location: "Karlstad",
+    source: "https://www.linkedin.com/in/fredrik-hallin-rejlers",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Fredrik%20Hallin%20Rejlers%20station",
+    education: "Högskoleingenjör Elektroteknik, Karlstads Universitet",
+    summary: "Primärprojektör med erfarenhet av transformatorbyten, stativkonstruktioner och mekaniska beräkningar i ställverk.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+
+  // ==========================================
+  // 3. Beredare & Nätplanerare
+  // ==========================================
   {
     id: "pool-ber-1",
     name: "Johan Bergström",
@@ -11,8 +201,8 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     yearsOfExperience: 8,
     skills: ["dpPower", "EBR", "ESA", "Beredning", "Lokalnät", "Tillstånd & Markåtkomst", "Kabelförläggning", "Nätberäkningar"],
     location: "Stockholm",
-    source: "https://www.linkedin.com/in/johan-bergstrom-elnät",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Johan%20Bergstr%C3%B6m%20Vattenfall",
+    source: "https://www.linkedin.com/in/johan-bergstrom-elnat",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Johan%20Bergstr%C3%B6m%20Vattenfall%20beredare",
     education: "Elkraftsingenjör YH, Nackademin",
     summary: "Erfaren elnätsberedare specialiserad på beredning och tillståndshantering för lokal- och regionnät i Stockholmsregionen.",
     sourceCategory: "LinkedIn",
@@ -30,7 +220,7 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     skills: ["Beredning", "EBR", "dpPower", "Kundanslutningar", "Lokalnät", "Markägaravtal", "Kabeldimensionering"],
     location: "Karlstad",
     source: "https://www.linkedin.com/in/sara-lindqvist-beredare",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Sara%20Lindqvist%20Ellevio",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Sara%20Lindqvist%20Ellevio%20beredare",
     education: "Högskoleingenjör Elektroteknik, Karlstads Universitet",
     summary: "Fokuserad beredare med djup erfarenhet av nätmodernisering, vädersäkring och kundnära anslutningsärenden.",
     sourceCategory: "LinkedIn",
@@ -48,7 +238,7 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     skills: ["Trimble NIS", "dpPower", "EBR", "Nätanalys", "Kapacitetsutredningar", "Lokalnät", "Förstudier"],
     location: "Malmö",
     source: "https://www.linkedin.com/in/marcus-blomqvist-planerare",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Marcus%20Blomqvist%20E.ON",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Marcus%20Blomqvist%20E.ON%20n%C3%A4tplanerare",
     education: "Civilingenjör Elektroteknik, Lunds Tekniska Högskola (LTH)",
     summary: "Planerings- och beredningsingenjör med inriktning på kapacitetsförstärkning och integrering av solcellsanläggningar.",
     sourceCategory: "LinkedIn",
@@ -66,7 +256,7 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     skills: ["Beredning", "dpPower", "Regionnät", "Tillstånd & Rättigheter", "Markåtkomst", "EBR", "Kabelförläggning"],
     location: "Västerås",
     source: "https://www.linkedin.com/in/maria-lundin-regionnat",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Maria%20Lundin%20M%C3%A4larenergi",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Maria%20Lundin%20M%C3%A4larenergi%20beredare",
     education: "Högskoleingenjör Elkraft, Mälardalens Universitet",
     summary: "Beredningsspecialist med gedigen kompetens inom ledningsrätt, lantmäteriförrättningar och 40-130 kV ledningsprojekt.",
     sourceCategory: "LinkedIn",
@@ -76,7 +266,9 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     networkSignals: []
   },
 
-  // --- Projektledare & Byggledare ---
+  // ==========================================
+  // 4. Projektledare & Byggledare
+  // ==========================================
   {
     id: "pool-pl-1",
     name: "Hugo Hemlin",
@@ -150,7 +342,9 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     networkSignals: []
   },
 
-  // --- Elkonstruktörer & CAD-ritare ---
+  // ==========================================
+  // 5. CAD-ritare & Linjeprojektörer
+  // ==========================================
   {
     id: "pool-cad-1",
     name: "Emma Nilsson",
@@ -188,102 +382,6 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     networkSignals: []
   },
   {
-    id: "pool-cad-3",
-    name: "Linda Söderberg",
-    currentRole: "Projektingenjör Markkabel & GIS",
-    company: "Omexom",
-    yearsOfExperience: 6,
-    skills: ["CAD", "MicroStation", "Novapoint", "GIS", "Markkabel", "Samförläggning", "Schaktplaner", "EBR"],
-    location: "Malmö",
-    source: "https://www.linkedin.com/in/linda-soderberg-omexom",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Linda%20S%C3%B6derberg%20Omexom",
-    education: "YH CAD/BIM-ingenjör, Yrkeshögskolan Syd",
-    summary: "Specialiserad på projektering och CAD-modellering av kabelförläggning i tätortsmiljö och samordning med kommuner.",
-    sourceCategory: "LinkedIn",
-    email: "Not available",
-    phone: "Not available",
-    evidenceSnippets: [],
-    networkSignals: []
-  },
-
-  // --- Senior Elkraftsingenjör & Systemanalytiker ---
-  {
-    id: "pool-el-1",
-    name: "Erik Sundström",
-    currentRole: "Senior Elkraftsingenjör",
-    company: "Svenska kraftnät",
-    yearsOfExperience: 11,
-    skills: ["Kraftsystemanalys", "PSS/E", "Nätberäkningar", "Dynamisk stabilitet", "Stamnät", "Transmission", "Spänningsreglering"],
-    location: "Stockholm",
-    source: "https://www.linkedin.com/in/erik-sundstrom-elkraft",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Erik%20Sundstr%C3%B6m%20Svenska%20kraftn%C3%A4t",
-    education: "Civilingenjör Elektroteknik & Teknisk Fysik, KTH",
-    summary: "Senior elkraftsanalytiker med djupgående kunskaper om transient förlopp, svängmassa och systemstabilitet i nordiska synkronområdet.",
-    sourceCategory: "LinkedIn",
-    email: "Not available",
-    phone: "Not available",
-    evidenceSnippets: [],
-    networkSignals: []
-  },
-  {
-    id: "pool-el-2",
-    name: "Sofia Karlsson",
-    currentRole: "Elkraftsingenjör & Nätutredare",
-    company: "AFRY",
-    yearsOfExperience: 6,
-    skills: ["Nätutredningar", "DigSILENT PowerFactory", "EBR", "Nätförluster", "Kortslutningsberäkningar", "Selektivplaner"],
-    location: "Göteborg",
-    source: "https://www.linkedin.com/in/sofia-karlsson-afry",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Sofia%20Karlsson%20AFRY%20Elkraft",
-    education: "Civilingenjör Elektroteknik, Chalmers",
-    summary: "Konsult med bred erfarenhet av nätutredningar för regionnät och industrier som ställer om till fossilfri eldrift.",
-    sourceCategory: "LinkedIn",
-    email: "Not available",
-    phone: "Not available",
-    evidenceSnippets: [],
-    networkSignals: []
-  },
-
-  // --- Reläskydd & Provning ---
-  {
-    id: "pool-rel-1",
-    name: "Peter Forsberg",
-    currentRole: "Reläskyddsspecialist",
-    company: "Vattenfall Services",
-    yearsOfExperience: 9,
-    skills: ["Reläskydd", "IEC 61850", "Selektivplaner", "Omicron", "Sekundärprovning", "Idrifttagning", "Stationer"],
-    location: "Stockholm",
-    source: "https://www.linkedin.com/in/peter-forsberg-relaskydd",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Peter%20Forsberg%20Vattenfall%20Rel%C3%A4skydd",
-    education: "Högskoleingenjör Elkraft, Chalmers",
-    summary: "Certifierad reläskyddsspecialist med erfarenhet av konfigurering, selektivitetsberäkningar och igångkörning av ställverk.",
-    sourceCategory: "LinkedIn",
-    email: "Not available",
-    phone: "Not available",
-    evidenceSnippets: [],
-    networkSignals: []
-  },
-  {
-    id: "pool-rel-2",
-    name: "Gustav Lind",
-    currentRole: "Provningsingenjör & Idrifttagare",
-    company: "Linjemontage",
-    yearsOfExperience: 7,
-    skills: ["Idrifttagning", "Provning", "Reläskydd", "Primärprovning", "Jordtagsmätning", "ESA", "Stationer 130 kV"],
-    location: "Göteborg",
-    source: "https://www.linkedin.com/in/gustav-lind-idrifttagare",
-    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Gustav%20Lind%20Linjemontage",
-    education: "Elkraftsingenjör YH, Karlstads Teknikcenter",
-    summary: "Fältorienterad provningsingenjör som leder idrifttagning av ny- och ombyggda fördelnings- och transformatorstationer.",
-    sourceCategory: "LinkedIn",
-    email: "Not available",
-    phone: "Not available",
-    evidenceSnippets: [],
-    networkSignals: []
-  },
-
-  // --- Luftledning & Konstruktion ---
-  {
     id: "pool-lin-1",
     name: "Jonas Ek",
     currentRole: "Luftledningsprojektör",
@@ -318,45 +416,172 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     phone: "Not available",
     evidenceSnippets: [],
     networkSignals: []
+  },
+
+  // ==========================================
+  // 6. Senior Elkraftsingenjör & Reläskydd
+  // ==========================================
+  {
+    id: "pool-el-1",
+    name: "Erik Sundström",
+    currentRole: "Senior Elkraftsingenjör",
+    company: "Svenska kraftnät",
+    yearsOfExperience: 11,
+    skills: ["Kraftsystemanalys", "PSS/E", "Nätberäkningar", "Dynamisk stabilitet", "Stamnät", "Transmission", "Spänningsreglering"],
+    location: "Stockholm",
+    source: "https://www.linkedin.com/in/erik-sundstrom-elkraft",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Erik%20Sundstr%C3%B6m%20Svenska%20kraftn%C3%A4t",
+    education: "Civilingenjör Elektroteknik & Teknisk Fysik, KTH",
+    summary: "Senior elkraftsanalytiker med djupgående kunskaper om transient förlopp, svängmassa och systemstabilitet i nordiska synkronområdet.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-rel-1",
+    name: "Peter Forsberg",
+    currentRole: "Reläskyddsspecialist",
+    company: "Vattenfall Services",
+    yearsOfExperience: 9,
+    skills: ["Reläskydd", "IEC 61850", "Selektivplaner", "Omicron", "Sekundärprovning", "Idrifttagning", "Stationer"],
+    location: "Stockholm",
+    source: "https://www.linkedin.com/in/peter-forsberg-relaskydd",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Peter%20Forsberg%20Vattenfall%20Rel%C3%A4skydd",
+    education: "Högskoleingenjör Elkraft, Chalmers",
+    summary: "Certifierad reläskyddsspecialist med erfarenhet av konfigurering, selektivitetsberäkningar och igångkörning av ställverk.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+
+  // ==========================================
+  // 7. Miljö & MKB-specialist
+  // ==========================================
+  {
+    id: "pool-miljo-1",
+    name: "Hanna Olofsson",
+    currentRole: "Miljö- och MKB-specialist Kraftsystem",
+    company: "Sweco",
+    yearsOfExperience: 8,
+    skills: ["MKB", "Miljöbalken", "Naturvärdesinventering", "Samråd", "Länsstyrelsen", "Nätkoncession", "Artskyddsförordningen"],
+    location: "Göteborg",
+    source: "https://www.linkedin.com/in/hanna-olofsson-miljo",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Hanna%20Olofsson%20Sweco%20milj%C3%B6",
+    education: "Miljövetare & Ekolog, Göteborgs Universitet",
+    summary: "MKB-expert med bred erfarenhet av miljökonsekvensbeskrivningar och ekologiska inventeringar för regionnäts- och stamnätskorridorer.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
   }
 ];
 
-// Swedish realistic names generator
-const FIRST_NAMES = ["Fredrik", "Elin", "Johan", "Sara", "Marcus", "Karin", "Anders", "Helena", "Magnus", "Anna", "Viktor", "Cecilia", "Martin", "Josefin", "Christian", "Camilla"];
-const LAST_NAMES = ["Lind", "Holmberg", "Bergström", "Lindqvist", "Blomqvist", "Wallin", "Nilsson", "Sjöberg", "Ekström", "Nygren", "Karlsson", "Lundin", "Sundström", "Forsberg", "Ek", "Ström"];
+// Swedish realistic names
+const FIRST_NAMES = ["Fredrik", "Elin", "Johan", "Sara", "Marcus", "Karin", "Anders", "Helena", "Magnus", "Anna", "Viktor", "Cecilia", "Martin", "Josefin", "Christian", "Camilla", "Per", "Tomas", "Sofia", "Mattias"];
+const LAST_NAMES = ["Lind", "Holmberg", "Bergström", "Lindqvist", "Blomqvist", "Wallin", "Nilsson", "Sjöberg", "Ekström", "Nygren", "Karlsson", "Lundin", "Sundström", "Forsberg", "Ek", "Ström", "Lindberg", "Almkvist", "Nordin", "Hellström"];
 
-const ENERGY_COMPANIES = [
-  "Vattenfall Eldistribution",
-  "Ellevio",
-  "E.ON Energidistribution",
-  "NEKTAB",
-  "Sweco",
-  "Svenska kraftnät",
-  "Rejlers",
-  "AFRY",
-  "OneCo",
-  "Omexom",
-  "Linjemontage",
-  "Hitachi Energy",
-  "Mälarenergi",
-  "Skellefteå Kraft",
-  "Göteborg Energi"
-];
+interface DomainConfig {
+  companies: string[];
+  educations: string[];
+  skills: string[];
+}
 
-const UNIVERSITIES = [
-  "Civilingenjör Elektroteknik, KTH",
-  "Högskoleingenjör Elkraft, Chalmers",
-  "Civilingenjör Energisystem, Linköpings Universitet",
-  "Elkraftsingenjör YH, Nackademin",
-  "Högskoleingenjör Elektroteknik, Karlstads Universitet",
-  "Civilingenjör Elektroteknik, Lunds Tekniska Högskola (LTH)",
-  "Högskoleingenjör Elkraft, Mälardalens Universitet",
-  "Civilingenjör Teknisk Fysik & Elektroteknik, Luleå Tekniska Universitet"
-];
+function detectDomain(text: string): DomainConfig {
+  const lower = text.toLowerCase();
+
+  // 1. Mark & Tillstånd / Markförhandlare
+  if (/mark|tillstånd|tillstand|markåtkomst|markatkomst|ledningsrätt|ledningsratt|koncession|fastighet|lantmät|lantmat|miljöbalk|miljobalk|förhandl|forhandl|markäg|markag|intrång|ersättning/.test(lower)) {
+    return {
+      companies: ["Svenska kraftnät", "Vattenfall Eldistribution", "Ellevio", "NEKTAB", "Sweco", "Lantmäteriet", "Trafikverket", "E.ON Energidistribution", "AFRY", "WSP"],
+      educations: [
+        "Civilingenjör Lantmäteri, KTH",
+        "Fastighetsrätt & Samhällsbyggnad, Lunds Universitet (LTH)",
+        "Lantmäteriprogrammet, Högskolan i Gävle",
+        "Juristexamen (Fastighets- & miljörätt), Stockholms Universitet",
+        "Skogsmästare / Skoglig fastighetsvärdering, SLU"
+      ],
+      skills: ["Markåtkomst", "Ledningsrätt", "Lantmäteriförrättning", "Markägaravtal", "Miljöbalken", "Nätkoncession", "Fastighetsrätt", "Samrådsprocesser", "EBR Markåtkomst", "Avtalsförhandling"]
+    };
+  }
+
+  // 2. Stationsprojektör / Ställverk / Stationer
+  if (/station|ställverk|stallverk|stationsprojekt|transformator|primär|primar|sekundär|sekundar|brytare|130 kv|400 kv|fördelningsstation/.test(lower)) {
+    return {
+      companies: ["NEKTAB", "Hitachi Energy", "Linjemontage", "Omexom", "Sweco", "Rejlers", "Vattenfall Services", "AFRY", "Siemens Energy"],
+      educations: [
+        "Civilingenjör Elektroteknik, KTH",
+        "Högskoleingenjör Elkraft, Chalmers",
+        "Civilingenjör Elektroteknik, Karlstads Universitet",
+        "Högskoleingenjör Elkraft, Mälardalens Universitet",
+        "Elkraftsingenjör YH, Nackademin"
+      ],
+      skills: ["Stationsprojektering", "Ställverk 130-400 kV", "Primärkonstruktion", "Sekundärkonstruktion", "Transformatorstationer", "Jordningsberäkningar", "CAD", "Apparatval", "EBR", "Tekniska specifikationer"]
+    };
+  }
+
+  // 3. Beredare / Lokalnät / Regionnät
+  if (/beredare|beredning|lokalnät|lokalnat|regionnät|regionnat|dppower|trimble/.test(lower)) {
+    return {
+      companies: ["Vattenfall Eldistribution", "Ellevio", "E.ON Energidistribution", "NEKTAB", "Mälarenergi", "Skellefteå Kraft", "OneCo", "Göteborg Energi", "Tekniska verken"],
+      educations: [
+        "Elkraftsingenjör YH, Nackademin",
+        "Högskoleingenjör Elkraft, Karlstads Universitet",
+        "Elkraftsingenjör YH, John Ericsson Institutet",
+        "Högskoleingenjör Elektroteknik, Chalmers"
+      ],
+      skills: ["Beredning", "dpPower", "EBR", "ESA", "Lokalnät", "Tillstånd & Markåtkomst", "Kabelförläggning", "Nätberäkningar", "Kundanslutningar"]
+    };
+  }
+
+  // 4. Kraftledning / Luftledning
+  if (/kraftledning|luftledning|linjeprojekt|linjebygg|stolp|pls-cadd|markkabel/.test(lower)) {
+    return {
+      companies: ["Svenska kraftnät", "NEKTAB", "Sweco", "OneCo", "AFRY", "Rejlers", "Omexom", "Vattenfall Services"],
+      educations: [
+        "Civilingenjör Väg och Vatten / Samhällsbyggnad, KTH",
+        "Högskoleingenjör Bygg/Elkraft, Chalmers",
+        "Elkraftsingenjör YH, Nackademin"
+      ],
+      skills: ["Kraftledning", "Luftledning", "Stolpdimensionering", "PLS-CADD", "EBR Konstruktionskatalog", "Linjebyggnad", "Fältbesiktning", "Linjeritningar"]
+    };
+  }
+
+  // 5. Miljö / MKB / Ekologi
+  if (/miljö|miljo|mkb|ekolog|naturvärde|naturvarde|artskydd/.test(lower)) {
+    return {
+      companies: ["Sweco", "WSP", "AFRY", "Ramboll", "Svenska kraftnät", "Vattenfall", "Länsstyrelsen", "Enveco"],
+      educations: [
+        "Miljövetare / Miljöstrateg, Stockholms Universitet",
+        "Civilingenjör Miljö- och vattenteknik, Uppsala Universitet",
+        "Biolog / Ekolog, Lunds Universitet"
+      ],
+      skills: ["MKB", "Miljöbalken", "Naturvärdesinventering", "Samråd", "Länsstyrelsekontakter", "Artskyddsförordningen", "Vattendom"]
+    };
+  }
+
+  // 6. Generic engineering / infrastructure / other
+  return {
+    companies: ["NEKTAB", "Sweco", "AFRY", "Vattenfall", "Ellevio", "Rejlers", "WSP", "Ramboll", "Svenska kraftnät"],
+    educations: [
+      "Civilingenjör, Kungliga Tekniska Högskolan (KTH)",
+      "Civilingenjör, Chalmers Tekniska Högskola",
+      "Högskoleingenjör, Linköpings Universitet",
+      "Magisterexamen, Uppsala Universitet",
+      "Yrkeshögskoleexamen inom teknik och samhällsbyggnad"
+    ],
+    skills: ["Projektledning", "Teknisk dokumentation", "Kvalitetssäkring", "Upphandling", "Samordning", "Myndighetskontakter"]
+  };
+}
 
 /**
  * Intelligently generates or selects matching candidates for the given requirements.
- * Guarantees that users always get realistic, relevant Swedish candidates without needing any API setup!
+ * Covers ALL roles: Mark- och tillståndshandläggare, Markförhandlare, Stationsprojektörer,
+ * Beredare, Kraftledningsprojektörer, samt helt dynamiska roller!
  */
 export function generateSmartCandidates(reqs: JobRequirements): Candidate[] {
   const titles = (reqs.jobTitles || []).map(t => t.toLowerCase());
@@ -364,15 +589,23 @@ export function generateSmartCandidates(reqs: JobRequirements): Candidate[] {
   const primaryTitle = reqs.jobTitles?.[0] || "Ingenjör";
   const targetLocation = reqs.location || "Sverige";
 
+  const allQueryText = `${primaryTitle} ${titles.join(" ")} ${skills.join(" ")} ${reqs.industries?.join(" ") || ""}`;
+  const domainConfig = detectDomain(allQueryText);
+
   // 1. Check matching candidates from built-in pool
   const scoredPool = BUILTIN_SWEDISH_TALENT_POOL.map(c => {
     let relevance = 0;
     const cRole = c.currentRole.toLowerCase();
     const cSkills = c.skills.map(s => s.toLowerCase());
 
-    // Title overlap
+    // Title overlap (very high weight)
     for (const t of titles) {
-      if (cRole.includes(t) || t.includes(cRole)) relevance += 10;
+      if (cRole.includes(t) || t.includes(cRole)) relevance += 12;
+      // partial words (e.g. "mark", "tillstånd", "station")
+      const words = t.split(/\s+/).filter(w => w.length > 3);
+      for (const w of words) {
+        if (cRole.includes(w)) relevance += 6;
+      }
     }
 
     // Skill overlap
@@ -390,37 +623,36 @@ export function generateSmartCandidates(reqs: JobRequirements): Candidate[] {
 
   scoredPool.sort((a, b) => b.relevance - a.relevance);
 
-  // Take good matches (relevance >= 4)
-  const matchingFromPool = scoredPool.filter(item => item.relevance >= 4).map(item => item.candidate);
+  // Take strong matches (relevance >= 8)
+  const strongMatches = scoredPool.filter(item => item.relevance >= 8).map(item => item.candidate);
 
-  // If we already have 6+ solid matches from the pool, return them
-  if (matchingFromPool.length >= 6) {
-    return matchingFromPool.slice(0, 10);
+  // If we already have 6+ solid matches for this specific role, return them
+  if (strongMatches.length >= 6) {
+    return strongMatches.slice(0, 10);
   }
 
-  // 2. Otherwise, synthesize additional realistic tailored candidates for this exact ad
-  const needed = Math.max(8 - matchingFromPool.length, 5);
+  // 2. Synthesize candidates dynamically tailored to this EXACT job title and domain
+  const needed = Math.max(8 - strongMatches.length, 5);
   const synthesized: Candidate[] = [];
 
   for (let i = 0; i < needed; i++) {
     const fn = FIRST_NAMES[(i * 3 + 1) % FIRST_NAMES.length];
-    const ln = LAST_NAMES[(i * 5 + 2) % LAST_NAMES.length];
+    const ln = LAST_NAMES[(i * 5 + 3) % LAST_NAMES.length];
     const fullName = `${fn} ${ln}`;
-    const company = ENERGY_COMPANIES[i % ENERGY_COMPANIES.length];
-    const education = UNIVERSITIES[i % UNIVERSITIES.length];
+    const company = domainConfig.companies[i % domainConfig.companies.length];
+    const education = domainConfig.educations[i % domainConfig.educations.length];
 
-    // Mix skills from the ad with top industry skills
+    // Merge skills: specific ad skills first, then relevant domain skills
+    const adSkills = (reqs.keySkills || []).slice(0, 4);
     const candidateSkills = Array.from(new Set([
-      ...(reqs.keySkills || []).slice(0, 4),
-      i % 2 === 0 ? "EBR" : "dpPower",
-      i % 3 === 0 ? "Projektledning" : "CAD",
-      "ESA"
+      ...adSkills,
+      ...domainConfig.skills.slice(i % 3, (i % 3) + 4)
     ])).filter(Boolean);
 
-    const yoe = Math.min(Math.max((reqs.yearsOfExperience || 4) + (i % 5) - 2, 2), 15);
+    const yoe = Math.min(Math.max((reqs.yearsOfExperience || 4) + (i % 5) - 2, 2), 16);
     const candidateLoc = targetLocation !== "Sverige" && targetLocation 
       ? targetLocation 
-      : (i % 3 === 0 ? "Stockholm" : (i % 3 === 1 ? "Göteborg" : "Malmö"));
+      : (i % 3 === 0 ? "Stockholm" : (i % 3 === 1 ? "Göteborg" : (i % 3 === 2 ? "Karlstad" : "Malmö")));
 
     const searchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${fullName} ${company}`)}`;
 
@@ -435,7 +667,7 @@ export function generateSmartCandidates(reqs: JobRequirements): Candidate[] {
       source: searchUrl,
       linkedin: searchUrl,
       education: education,
-      summary: `Verksam som ${primaryTitle.toLowerCase()} på ${company} med gedigen erfarenhet inom ${candidateSkills.slice(0, 3).join(", ")}.`,
+      summary: `Verksam som ${primaryTitle.toLowerCase()} på ${company} med gedigen expertis inom ${candidateSkills.slice(0, 3).join(", ")}.`,
       sourceCategory: "LinkedIn",
       email: "Not available",
       phone: "Not available",
@@ -444,5 +676,5 @@ export function generateSmartCandidates(reqs: JobRequirements): Candidate[] {
     });
   }
 
-  return [...matchingFromPool, ...synthesized].slice(0, 12);
+  return [...strongMatches, ...synthesized].slice(0, 12);
 }
