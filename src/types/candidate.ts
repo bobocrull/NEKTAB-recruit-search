@@ -18,6 +18,7 @@ export interface Candidate {
   evidenceSnippets?: string[];
   integrationStatus?: "Ej exporterad" | "Redo för export" | "Exporterad" | "Skickad till Cinode";
   education?: string;
+  summary?: string;
 }
 
 export type CandidateSourceCategory =
