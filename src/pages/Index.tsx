@@ -493,6 +493,7 @@ export default function Index() {
   const { toast } = useToast();
 
   const [recruiterName, setRecruiterName] = useState(localStorage.getItem("nektab-recruiter-name") || "");
+  const [tavilyApiKey, setTavilyApiKey] = useState(() => localStorage.getItem("nektab-tavily-api-key") || "");
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [hoveredRequirementSkill, setHoveredRequirementSkill] = useState<string | null>(null);
   const [showDatabaseOnly, setShowDatabaseOnly] = useState(false);
@@ -802,28 +803,24 @@ export default function Index() {
   // Call the original Edge function on bqfksdoevseeknyiglur to search the web for free (via Lovable's keys!)
   const fetchWebCandidatesFree = async (reqs: JobRequirements): Promise<any[]> => {
     const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const oldUrl = isLocal 
-      ? "https://bqfksdoevseeknyiglur.supabase.co/functions/v1/search-candidates"
-      : "/api/search-candidates";
-    const oldAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxZmtzZG9ldnNlZWtueWlnbHVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MDQ0NDEsImV4cCI6MjA5MDQ4MDQ0MX0.40mAdlNjKTp5ydyYvR6icObQENOosKM26dKyplzxkWA";
+    const endpoint = "/api/search-candidates";
     
     try {
       const headers: Record<string, string> = {
         "Content-Type": "application/json"
       };
 
-      if (isLocal) {
-        headers["apikey"] = oldAnonKey;
-        headers["Authorization"] = `Bearer ${oldAnonKey}`;
-      } else {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const res = await fetch(oldUrl, {
+      if (tavilyApiKey && tavilyApiKey.trim()) {
+        headers["x-tavily-api-key"] = tavilyApiKey.trim();
+      }
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -834,7 +831,7 @@ export default function Index() {
 
       if (res.ok) {
         const data = await res.json();
-        if (data.candidates) {
+        if (data.candidates && data.candidates.length > 0) {
           return data.candidates.map((c: any) => ({
             id: c.id,
             name: c.name,
@@ -854,12 +851,17 @@ export default function Index() {
             education: c.education || ""
           }));
         }
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        return [];
       } else {
-        const errText = await res.text();
-        throw new Error(`Sök-API svarade med felkod ${res.status}: ${errText}`);
+        const errJson = await res.json().catch(() => null);
+        const errMsg = errJson?.error || (await res.text().catch(() => ""));
+        throw new Error(errMsg || `Sök-API svarade med felkod ${res.status}`);
       }
     } catch (err: any) {
-      console.error("Free web search failed:", err);
+      console.error("Web search failed:", err);
       throw err;
     }
   };
@@ -976,9 +978,9 @@ export default function Index() {
         candidates = readLocalCandidates();
       }
 
-      setSearchProgress(prev => ({ completed: 1, total: 2, queries: [...prev.queries, "Söker på LinkedIn & RocketReach (0 kr API)..."] }));
+      setSearchProgress(prev => ({ completed: 1, total: 2, queries: [...prev.queries, "Söker kandidater på LinkedIn & externa källor..."] }));
       
-      // Search web candidates using free DuckDuckGo web sourcing
+      // Search web candidates using external sourcing (Tavily/LinkedIn)
       let webCandidates: any[] = [];
       try {
         const foundWeb = await fetchWebCandidatesFree(reqs);
@@ -1935,7 +1937,7 @@ ${recruiterName || "NEKTAB"}`;
                     <User className="h-3.5 w-3.5" />
                     Mina inställningar
                   </p>
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 space-y-3">
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase font-bold text-muted-foreground">Din signatur (e-post/LinkedIn)</label>
                       <input 
@@ -1948,6 +1950,32 @@ ${recruiterName || "NEKTAB"}`;
                         placeholder="T.ex. Andreas Strandberg"
                         className="h-9 w-full border border-border bg-white px-3 text-xs outline-none focus:border-primary font-bold text-foreground"
                       />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground">Tavily Sök-API (Valfritt)</label>
+                        <a 
+                          href="https://tavily.com" 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="text-[10px] text-primary hover:underline font-bold inline-flex items-center gap-0.5"
+                        >
+                          Skapa gratis nyckel <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      </div>
+                      <input 
+                        type="password"
+                        value={tavilyApiKey}
+                        onChange={(e) => {
+                          setTavilyApiKey(e.target.value);
+                          localStorage.setItem("nektab-tavily-api-key", e.target.value);
+                        }}
+                        placeholder="tvly-..."
+                        className="h-9 w-full border border-border bg-white px-3 text-xs outline-none focus:border-primary font-mono text-foreground"
+                      />
+                      <p className="text-[10px] text-muted-foreground leading-tight">
+                        Möjliggör automatisk LinkedIn-kandidatsökning i appen (1 000 gratis sökningar/mån). Kan även anges i Vercel (TAVILY_API_KEY).
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2145,12 +2173,52 @@ ${recruiterName || "NEKTAB"}`;
                 </div>
 
                 {searchError && (
-                  <div className="flex gap-3 border-l-4 border-destructive bg-white p-4 text-sm text-foreground shadow-sm">
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                    <div>
-                      <p className="brand-kicker text-destructive font-bold uppercase text-xs tracking-wider">Sökningen misslyckades</p>
-                      <p className="mt-1">{searchError}</p>
+                  <div className="border-l-4 border-amber-500 bg-amber-50/70 p-4 text-sm text-foreground shadow-sm space-y-3 animate-fade-in">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                      <div className="flex-1 space-y-1">
+                        <p className="brand-kicker text-amber-900 font-bold uppercase text-xs tracking-wider">
+                          Webbsökning begränsad – Visar kandidater från interna databasen
+                        </p>
+                        <p className="text-xs text-foreground/85 leading-relaxed">
+                          {searchError}
+                        </p>
+                      </div>
                     </div>
+
+                    {requirements && (
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-amber-200/60">
+                        <span className="text-xs font-bold text-foreground">Sök direkt på LinkedIn:</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-primary text-black hover:bg-primary/90 font-bold text-xs h-8 rounded-none gap-1.5 shadow-sm"
+                          onClick={() => {
+                            const title = requirements.jobTitles?.[0] || quickProfile || "ingenjör";
+                            const skills = (requirements.keySkills || []).slice(0, 3).join(" ");
+                            const loc = requirements.location || "Sverige";
+                            const q = `site:linkedin.com/in "${title}" ${skills} "${loc}" -intitle:"jobs" -intitle:"hiring"`;
+                            window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, "_blank");
+                          }}
+                        >
+                          <Search className="h-3.5 w-3.5" />
+                          Sök "{requirements.jobTitles?.[0] || quickProfile || "kandidater"}" via Google/LinkedIn <ExternalLink className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="bg-white border-border text-foreground hover:bg-muted font-bold text-xs h-8 rounded-none gap-1.5"
+                          onClick={() => {
+                            const title = requirements.jobTitles?.[0] || quickProfile || "";
+                            const loc = requirements.location || "Sverige";
+                            window.open(`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${title} ${loc}`.trim())}`, "_blank");
+                          }}
+                        >
+                          Öppna LinkedIn People Search <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 
