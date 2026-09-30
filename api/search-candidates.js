@@ -240,7 +240,22 @@ const LAST_NAMES = ["Lind", "Holmberg", "Bergström", "Lindqvist", "Blomqvist", 
 function detectDomain(text) {
   const lower = (text || "").toLowerCase();
 
-  // 1. Mark & Tillstånd / Markförhandlare
+  // 1. Skog & Skoglig rådgivning / Skogsbruk
+  if (/skog|virke|mellanskog|södra|sveaskog|holmen|sca|skogsäg|skötsel/i.test(lower)) {
+    return {
+      companies: ["Mellanskog", "Södra Skogsägarna", "Norra Skog", "Sveaskog", "Holmen Skog", "SCA Skog", "Stora Enso Skog", "Skogsstyrelsen"],
+      educations: [
+        "Skogsmästare, Sveriges Lantbruksuniversitet (SLU)",
+        "Jägmästare, Sveriges Lantbruksuniversitet (SLU)",
+        "Skoglig kandidatexamen / Skogsvetenskap, SLU",
+        "Skogstekniker, Gammelkroppa Skogsskola",
+        "Skoglig högskoleutbildning, SLU Alnarp / Umeå"
+      ],
+      skills: ["Skogsskötsel", "Skogsbruk", "Rådgivning", "Medlemsrelationer", "Virkesköp", "Relationsbyggande", "B-körkort", "Skogsbruksplaner", "Affärsmässighet", "IT-mognad"]
+    };
+  }
+
+  // 2. Mark & Tillstånd / Markförhandlare
   if (/mark|tillstånd|tillstand|markåtkomst|markatkomst|ledningsrätt|ledningsratt|koncession|fastighet|lantmät|lantmat|miljöbalk|miljobalk|förhandl|forhandl|markäg|markag|intrång|ersättning/.test(lower)) {
     return {
       companies: ["Svenska kraftnät", "Vattenfall Eldistribution", "Ellevio", "NEKTAB", "Sweco", "Lantmäteriet", "Trafikverket", "E.ON Energidistribution", "AFRY", "WSP"],

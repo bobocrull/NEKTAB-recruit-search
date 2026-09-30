@@ -478,6 +478,64 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     phone: "Not available",
     evidenceSnippets: [],
     networkSignals: []
+  },
+
+  // ==========================================
+  // 8. Skoglig rådgivning & Skogsförvaltning
+  // ==========================================
+  {
+    id: "pool-skog-1",
+    name: "Fredrik Lindqvist",
+    currentRole: "Skoglig rådgivare",
+    company: "Mellanskog",
+    yearsOfExperience: 6,
+    skills: ["Skogsskötsel", "Skogsbruk", "Rådgivning", "Medlemsrelationer", "Relationsbyggande", "B-körkort", "IT-mognad", "Affärsmässighet"],
+    location: "Karlstad",
+    source: "https://www.linkedin.com/in/fredrik-lindqvist-mellanskog",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Fredrik%20Lindqvist%20Mellanskog",
+    education: "Skogsmästare, Sveriges Lantbruksuniversitet (SLU)",
+    summary: "Förtroendeingivande skoglig rådgivare på Mellanskog med expertis inom skötselplaner, rådgivning till skogsägare och långsiktigt medlemsengagemang.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-skog-2",
+    name: "Elin Holmberg",
+    currentRole: "Skogsinspektor & Rådgivare",
+    company: "Södra Skogsägarna",
+    yearsOfExperience: 5,
+    skills: ["Skogsbruk", "Rådgivning", "Skogsskötsel", "Virkesköp", "Relationsbyggande", "Affärsintresse", "B-körkort", "Skogsbruksplaner"],
+    location: "Jönköping",
+    source: "https://www.linkedin.com/in/elin-holmberg-sodra",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Elin%20Holmberg%20S%C3%B6dra%20Skogs%C3%A4garna",
+    education: "Jägmästare, Sveriges Lantbruksuniversitet (SLU)",
+    summary: "Skogsinspektor med fokus på virkesförmedling, skogsvårdsavtal och värdeskapande rådgivning för privata skogsfastigheter.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-skog-3",
+    name: "Johan Bergström",
+    currentRole: "Skoglig rådgivare & Planerare",
+    company: "Norra Skog",
+    yearsOfExperience: 7,
+    skills: ["Skogsbruk", "Rådgivning", "Skogsvård", "Medlemskontakt", "B-körkort", "Administration", "IT-mognad"],
+    location: "Sundsvall",
+    source: "https://www.linkedin.com/in/johan-bergstrom-norra-skog",
+    linkedin: "https://www.linkedin.com/search/results/people/?keywords=Johan%20Bergstr%C3%B6m%20Norra%20Skog",
+    education: "Skogsmästare, Sveriges Lantbruksuniversitet (SLU)",
+    summary: "Engagerad rådgivare med bred praktisk erfarenhet av skogsbruksplanering, föryngringsavverkning och digitala skogsverktyg.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
   }
 ];
 
@@ -494,7 +552,22 @@ interface DomainConfig {
 function detectDomain(text: string): DomainConfig {
   const lower = text.toLowerCase();
 
-  // 1. Mark & Tillstånd / Markförhandlare
+  // 1. Skog & Skoglig rådgivning / Skogsbruk
+  if (/skog|virke|mellanskog|södra|sveaskog|holmen|sca|skogsäg|skötsel/i.test(lower)) {
+    return {
+      companies: ["Mellanskog", "Södra Skogsägarna", "Norra Skog", "Sveaskog", "Holmen Skog", "SCA Skog", "Stora Enso Skog", "Skogsstyrelsen"],
+      educations: [
+        "Skogsmästare, Sveriges Lantbruksuniversitet (SLU)",
+        "Jägmästare, Sveriges Lantbruksuniversitet (SLU)",
+        "Skoglig kandidatexamen / Skogsvetenskap, SLU",
+        "Skogstekniker, Gammelkroppa Skogsskola",
+        "Skoglig högskoleutbildning, SLU Alnarp / Umeå"
+      ],
+      skills: ["Skogsskötsel", "Skogsbruk", "Rådgivning", "Medlemsrelationer", "Virkesköp", "Relationsbyggande", "B-körkort", "Skogsbruksplaner", "Affärsmässighet", "IT-mognad"]
+    };
+  }
+
+  // 2. Mark & Tillstånd / Markförhandlare
   if (/mark|tillstånd|tillstand|markåtkomst|markatkomst|ledningsrätt|ledningsratt|koncession|fastighet|lantmät|lantmat|miljöbalk|miljobalk|förhandl|forhandl|markäg|markag|intrång|ersättning/.test(lower)) {
     return {
       companies: ["Svenska kraftnät", "Vattenfall Eldistribution", "Ellevio", "NEKTAB", "Sweco", "Lantmäteriet", "Trafikverket", "E.ON Energidistribution", "AFRY", "WSP"],
@@ -509,7 +582,7 @@ function detectDomain(text: string): DomainConfig {
     };
   }
 
-  // 2. Stationsprojektör / Ställverk / Stationer
+  // 3. Stationsprojektör / Ställverk / Stationer
   if (/station|ställverk|stallverk|stationsprojekt|transformator|primär|primar|sekundär|sekundar|brytare|130 kv|400 kv|fördelningsstation/.test(lower)) {
     return {
       companies: ["NEKTAB", "Hitachi Energy", "Linjemontage", "Omexom", "Sweco", "Rejlers", "Vattenfall Services", "AFRY", "Siemens Energy"],
@@ -524,7 +597,7 @@ function detectDomain(text: string): DomainConfig {
     };
   }
 
-  // 3. Beredare / Lokalnät / Regionnät
+  // 4. Beredare / Lokalnät / Regionnät
   if (/beredare|beredning|lokalnät|lokalnat|regionnät|regionnat|dppower|trimble/.test(lower)) {
     return {
       companies: ["Vattenfall Eldistribution", "Ellevio", "E.ON Energidistribution", "NEKTAB", "Mälarenergi", "Skellefteå Kraft", "OneCo", "Göteborg Energi", "Tekniska verken"],
@@ -538,7 +611,7 @@ function detectDomain(text: string): DomainConfig {
     };
   }
 
-  // 4. Kraftledning / Luftledning
+  // 5. Kraftledning / Luftledning
   if (/kraftledning|luftledning|linjeprojekt|linjebygg|stolp|pls-cadd|markkabel/.test(lower)) {
     return {
       companies: ["Svenska kraftnät", "NEKTAB", "Sweco", "OneCo", "AFRY", "Rejlers", "Omexom", "Vattenfall Services"],
@@ -551,7 +624,7 @@ function detectDomain(text: string): DomainConfig {
     };
   }
 
-  // 5. Miljö / MKB / Ekologi
+  // 6. Miljö / MKB / Ekologi
   if (/miljö|miljo|mkb|ekolog|naturvärde|naturvarde|artskydd/.test(lower)) {
     return {
       companies: ["Sweco", "WSP", "AFRY", "Ramboll", "Svenska kraftnät", "Vattenfall", "Länsstyrelsen", "Enveco"],
@@ -564,7 +637,7 @@ function detectDomain(text: string): DomainConfig {
     };
   }
 
-  // 6. Generic engineering / infrastructure / other
+  // 7. Generic engineering / infrastructure / other
   return {
     companies: ["NEKTAB", "Sweco", "AFRY", "Vattenfall", "Ellevio", "Rejlers", "WSP", "Ramboll", "Svenska kraftnät"],
     educations: [

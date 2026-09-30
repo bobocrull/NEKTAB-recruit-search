@@ -186,7 +186,7 @@ function cleanJobRequirements(requirements: JobRequirements): JobRequirements {
   };
 }
 
-// Rule-based requirement parser that runs 100% locally in the browser with 0 API costs
+// Intelligent multi-domain requirement parser that runs 100% locally in the browser with 0 API costs
 function parseJobDescriptionLocally(text: string): JobRequirements {
   const lowerText = text.toLowerCase();
   
@@ -220,59 +220,137 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
     else yearsOfExperience = 3;
   }
 
-  // 3. Key Skills dictionary matching
-  const SKILL_DICTIONARY = [
-    "CAD", "AutoCAD", "MicroStation", "Luftledning", "Stolpplacering", "Elnät", "Elkraft", "Högspänning",
-    "Ställverk", "Transformator", "GIS", "Markåtkomst", "Tillstånd", "Projektledning", "Beredning", 
-    "Beredare", "Stationsprojektering", "Kabel", "Kabelprojektering", "Kraftledning", "Transmission", 
-    "Distribution", "Mellanspänning", "Lågspänning", "Projektör", "CAD-ritare"
+  // 3. Dynamic Title Extraction (Contextual NLP patterns + dictionary)
+  let extractedTitle = "";
+  const titlePatterns = [
+    /(?:som|rollen som|tjänsten som|arbetet som|jobbet som)\s+([a-zåäö\s-]{3,35}?)(?:\s+(?:är|innebär|arbetar|ska|hos|till|på|där|,|\.))/i,
+    /(?:vi söker|söker vi|vill du bli)\s+(?:en|ett|vår nästa|vår nya)?\s*([a-zåäö\s-]{3,35}?)(?:\s+(?:som|till|hos|med|\.|\n))/i,
+    /(?:titel|befattning|yrkesroll|roll):\s*([^\n\r]+)/i
   ];
-  const keySkills: string[] = [];
-  SKILL_DICTIONARY.forEach(skill => {
-    const regex = new RegExp(`\\b${skill.toLowerCase()}\\w*\\b`, 'i');
-    if (regex.test(lowerText)) {
-      keySkills.push(skill);
-    }
-  });
 
-  // 4. Job Titles matching
-  const TITLE_DICTIONARY = [
-    "Kraftledningsprojektör", "Elkraftingenjör", "CAD-konstruktör", "Beredare", "Stationsprojektör", 
-    "Projektledare elnät", "Elnätsingenjör", "GIS-ingenjör", "Tillståndshandläggare", "Markförhandlare"
-  ];
-  const jobTitles: string[] = [];
-  TITLE_DICTIONARY.forEach(title => {
-    const regex = new RegExp(`\\b${title.toLowerCase()}\\w*\\b`, 'i');
-    if (regex.test(lowerText)) {
-      jobTitles.push(title);
-    }
-  });
-  if (jobTitles.length === 0) {
-    const titleMatch = text.split(/\r?\n/)[0]?.replace(/^Titel:\s*/i, "").trim();
-    if (titleMatch && titleMatch.length > 3 && titleMatch.length < 50) {
-      jobTitles.push(titleMatch);
-    } else {
-      jobTitles.push("Projektör");
+  for (const pattern of titlePatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      const candidate = match[1].trim();
+      if (!/^(en|ett|dig|oss|vår|våra|del|team|person|medarbetare|kandidat)$/i.test(candidate) && candidate.length > 3) {
+        extractedTitle = candidate.charAt(0).toUpperCase() + candidate.slice(1);
+        break;
+      }
     }
   }
 
+  const KNOWN_TITLES = [
+    "Skoglig rådgivare", "Skogsinspektor", "Virkesköpare", "Skogsrådgivare",
+    "Mark- och tillståndshandläggare", "Tillståndshandläggare", "Markförhandlare", "Tillståndsspecialist", "Markåtkomsthandläggare",
+    "Stationsprojektör", "Stationskonstruktör", "Ställverkskonstruktör", "Transformatorstationer",
+    "Kraftledningsprojektör", "Luftledningsprojektör", "Linjeprojektör", "Kabelprojektör",
+    "Beredare", "Elnätsberedare", "Nätplanerare", "Beredningsingenjör",
+    "Elkraftsingenjör", "Senior Elkraftsingenjör", "Elkonstruktör", "CAD-konstruktör", "CAD-ritare",
+    "Projektledare", "Byggledare", "Uppdragsledare", "Projekteringsledare", "Montageledare",
+    "Reläskyddsspecialist", "Reläskyddstekniker", "Provningsingenjör",
+    "Miljöspecialist", "MKB-samordnare", "Ekolog", "Lantmätare"
+  ];
+
+  const jobTitles: string[] = [];
+  if (extractedTitle) {
+    jobTitles.push(extractedTitle);
+  }
+
+  for (const title of KNOWN_TITLES) {
+    const regex = new RegExp(`\\b${title.toLowerCase()}\\b`, 'i');
+    if (regex.test(lowerText) && !jobTitles.includes(title)) {
+      jobTitles.push(title);
+    }
+  }
+
+  if (jobTitles.length === 0) {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length > 0) {
+      const firstLine = lines[0].replace(/^Titel:\s*/i, "").replace(/^Annonstext:\s*/i, "").trim();
+      if (firstLine.length > 3 && firstLine.length <= 50 && !/[.!?]$/.test(firstLine)) {
+        jobTitles.push(firstLine.charAt(0).toUpperCase() + firstLine.slice(1));
+      }
+    }
+  }
+  if (jobTitles.length === 0) {
+    jobTitles.push("Rådgivare / Projektör");
+  }
+
+  // 4. Extensive Multi-Domain Skills Dictionary & Pattern Extraction
+  const EXTENSIVE_SKILLS = [
+    // Skog & Rådgivning
+    "Skogsbruk", "Skogsskötsel", "Rådgivning", "Skoglig rådgivning", "Skogsvård", "Virkesköp", 
+    "Medlemsrelationer", "Relationsbyggande", "Affärsmässighet", "Affärsintresse", "B-körkort",
+    "IT-mognad", "Administration", "Kommunikation", "Skogsbruksplaner",
+    // Mark & Tillstånd
+    "Markåtkomst", "Ledningsrätt", "Lantmäteriförrättning", "Markägaravtal", "Miljöbalken", 
+    "Nätkoncession", "Fastighetsrätt", "Samrådsprocesser", "EBR Markåtkomst", "Markförhandling", 
+    "Intrångsersättning", "Servitut", "Avtalsjuridik", "Lantmäteriet",
+    // Stationsprojektering & Konstruktion
+    "Stationsprojektering", "Ställverk", "Ställverk 130-400 kV", "Primärkonstruktion", "Sekundärkonstruktion", 
+    "Transformatorstationer", "Jordningsberäkningar", "CAD", "AutoCAD", "MicroStation", "Apparatval", 
+    "EBR", "ESA", "Bygghandlingar", "3D-modellering", "Stationslayouter",
+    // Beredning & Elnät
+    "Beredning", "dpPower", "Trimble NIS", "Lokalnät", "Regionnät", "Elnät", "Elkraft", "Kabelförläggning", 
+    "Nätberäkningar", "Kraftledning", "Luftledning", "Stolpplacering", "Högspänning", "Transmission", 
+    "Kundanslutningar", "Kabeldimensionering", "Stolpdimensionering", "PLS-CADD",
+    // Projektledning & Miljö
+    "Projektledning", "Byggledning", "Uppdragsledning", "Entreprenadjuridik", "AB 04", "ABT 06", "AMA Anläggning",
+    "Arbetsmiljö BAS-P/BAS-U", "Kvalitetssäkring", "MKB", "Miljökonsekvensbeskrivning", "Reläskydd", "Idrifttagning"
+  ];
+
+  const keySkills: string[] = [];
+  for (const skill of EXTENSIVE_SKILLS) {
+    const regex = new RegExp(`\\b${skill.toLowerCase()}\\b`, 'i');
+    if (regex.test(lowerText) && !keySkills.includes(skill)) {
+      keySkills.push(skill);
+    }
+  }
+
+  // Contextual fallback triggers for explicit requirements
+  if (/b-körkort/i.test(lowerText) && !keySkills.includes("B-körkort")) keySkills.push("B-körkort");
+  if (/skogsbruk/i.test(lowerText) && !keySkills.includes("Skogsbruk")) keySkills.push("Skogsbruk");
+  if (/skogsskötsel/i.test(lowerText) && !keySkills.includes("Skogsskötsel")) keySkills.push("Skogsskötsel");
+  if (/rådgiv/i.test(lowerText) && !keySkills.includes("Rådgivning")) keySkills.push("Rådgivning");
+  if (/relation/i.test(lowerText) && !keySkills.includes("Relationsbyggande")) keySkills.push("Relationsbyggande");
+  if (/affär/i.test(lowerText) && !keySkills.includes("Affärsmässighet")) keySkills.push("Affärsmässighet");
+  if (/it-mognad/i.test(lowerText) && !keySkills.includes("IT-mognad")) keySkills.push("IT-mognad");
+
   // 5. Industries
   const industries: string[] = [];
-  if (/elnät|elkraft|energi/i.test(lowerText)) industries.push("Elnät & Elkraft");
-  if (/infrastruktur/i.test(lowerText)) industries.push("Infrastruktur");
+  if (/skog|skogsbruk|mellanskog|virke|skogsäg/i.test(lowerText)) industries.push("Skogsbruk & Skogsnäring");
+  if (/mark|fastighet|lantmät|ledningsrätt|tillstånd|koncession/i.test(lowerText)) industries.push("Fastighet, Mark & Tillstånd");
+  if (/elnät|elkraft|energi|kraftledning|ställverk|station/i.test(lowerText)) industries.push("Elnät, Elkraft & Energi");
+  if (/infrastruktur|samhällsbyggnad/i.test(lowerText)) industries.push("Infrastruktur & Samhällsbyggnad");
   if (/konsult/i.test(lowerText)) industries.push("Teknisk konsultverksamhet");
 
   // 6. Target Companies
   const targetCompanies: string[] = [];
-  if (/vattenfall/i.test(lowerText)) targetCompanies.push("Vattenfall");
-  if (/ellevio/i.test(lowerText)) targetCompanies.push("Ellevio");
-  if (/svenska kraftnät/i.test(lowerText)) targetCompanies.push("Svenska kraftnät");
-  if (/sweco/i.test(lowerText)) targetCompanies.push("Sweco");
-  if (/rejlers/i.test(lowerText)) targetCompanies.push("Rejlers");
+  const KNOWN_COMPANIES = [
+    "Mellanskog", "Södra", "Norra Skog", "Sveaskog", "Holmen", "SCA", "Stora Enso", "Skogsstyrelsen",
+    "Svenska kraftnät", "Vattenfall", "Ellevio", "E.ON", "NEKTAB", "Sweco", "Rejlers", "AFRY", 
+    "OneCo", "Omexom", "Linjemontage", "Hitachi Energy", "Lantmäteriet", "Trafikverket", "Mälarenergi"
+  ];
+  for (const c of KNOWN_COMPANIES) {
+    if (new RegExp(`\\b${c.toLowerCase()}\\b`, 'i').test(lowerText) && !targetCompanies.includes(c)) {
+      targetCompanies.push(c);
+    }
+  }
+
+  // Automatic peer company seeding based on industry
+  if (industries.includes("Skogsbruk & Skogsnäring")) {
+    if (!targetCompanies.includes("Mellanskog")) targetCompanies.push("Mellanskog");
+    if (!targetCompanies.includes("Södra Skogsägarna")) targetCompanies.push("Södra Skogsägarna");
+    if (!targetCompanies.includes("Sveaskog")) targetCompanies.push("Sveaskog");
+  } else if (industries.includes("Fastighet, Mark & Tillstånd")) {
+    if (!targetCompanies.includes("Svenska kraftnät")) targetCompanies.push("Svenska kraftnät");
+    if (!targetCompanies.includes("Vattenfall")) targetCompanies.push("Vattenfall");
+    if (!targetCompanies.includes("NEKTAB")) targetCompanies.push("NEKTAB");
+  }
 
   // 7. Location
   let location: string | null = null;
-  const locations = ["Stockholm", "Göteborg", "Malmö", "Sundsvall", "Västerås", "Örebro", "Uppsala", "Linköping"];
+  const locations = ["Stockholm", "Göteborg", "Malmö", "Sundsvall", "Västerås", "Örebro", "Uppsala", "Linköping", "Karlstad", "Umeå", "Luleå", "Jönköping", "Växjö", "Gävle", "Falun"];
   for (const loc of locations) {
     if (new RegExp(`\\b${loc}\\b`, 'i').test(lowerText)) {
       location = loc;
@@ -284,7 +362,7 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
   return {
     seniorityLevel,
     yearsOfExperience,
-    keySkills,
+    keySkills: keySkills.slice(0, 10),
     industries,
     jobTitles,
     targetCompanies,
