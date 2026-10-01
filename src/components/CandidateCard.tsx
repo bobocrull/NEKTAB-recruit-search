@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, Briefcase, Clock, Database, Mail, Phone, Linkedin, Download, ChevronDown, ChevronUp, Copy, AlertTriangle, Search, Sparkles, Network, FileSearch, GraduationCap, Trash2 } from "lucide-react";
+import { MapPin, Briefcase, Clock, Database, Mail, Phone, Linkedin, Download, ChevronDown, ChevronUp, Copy, AlertTriangle, Search, Sparkles, Network, FileSearch, GraduationCap, Trash2, Building2 } from "lucide-react";
 
 type PipelineStatus = "Ny" | "Intressant" | "Kontakta" | "Avvakta" | "Ej relevant" | "Skickad till Cinode";
 type FeedbackTag = "Relevant" | "Inte relevant" | "Fel bransch" | "För junior" | "Fel geografi" | "Saknar nyckelkompetens";
@@ -180,29 +180,49 @@ export function CandidateCard({
                   </span>
                 </h3>
                 
-                {/* Role and Company */}
-                <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground/80 mt-0.5">
-                  <Briefcase className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="break-words">
-                    {candidate.currentRole}
-                    {candidate.company && 
-                     !["linkedin-verifierad", "okänt bolag", "linkedin", "intern databas"].includes(candidate.company.trim().toLowerCase()) &&
-                     !candidate.currentRole.toLowerCase().includes(candidate.company.toLowerCase()) && (
-                      <>
-                        <span className="text-muted-foreground font-normal"> på </span>
-                        <span className="font-semibold text-foreground">{candidate.company}</span>
-                      </>
-                    )}
-                  </span>
-                </p>
+                {/* Metadata details: Nuvarande titel, Utbildning, Relevanta jobb */}
+                <div className="space-y-1.5 mt-1 text-xs sm:text-sm">
+                  {/* Nuvarande titel */}
+                  <div className="flex items-start gap-1.5 text-foreground">
+                    <Briefcase className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+                    <span className="break-words leading-snug">
+                      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mr-1.5">Nuvarande titel:</span>
+                      <span className="font-semibold text-foreground">{candidate.currentRole}</span>
+                      {candidate.company && 
+                       !["linkedin-verifierad", "okänt bolag", "linkedin", "intern databas"].includes(candidate.company.trim().toLowerCase()) &&
+                       !candidate.currentRole.toLowerCase().includes(candidate.company.toLowerCase()) && (
+                        <>
+                          <span className="text-muted-foreground font-normal"> på </span>
+                          <span className="font-semibold text-foreground">{candidate.company}</span>
+                        </>
+                      )}
+                    </span>
+                  </div>
 
-                {/* Education */}
-                {candidate.education && (
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                    <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    <span className="break-words font-medium">{candidate.education}</span>
-                  </p>
-                )}
+                  {/* Utbildning */}
+                  {candidate.education && (
+                    <div className="flex items-start gap-1.5 text-muted-foreground">
+                      <GraduationCap className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                      <span className="break-words leading-snug">
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mr-1.5">Utbildning:</span>
+                        <span className="font-medium text-foreground/90">{candidate.education}</span>
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Relevanta jobb */}
+                  {((candidate.relevantJobs && candidate.relevantJobs.length > 0) || (candidate.previousRoles && candidate.previousRoles.length > 0)) && (
+                    <div className="flex items-start gap-1.5 text-muted-foreground">
+                      <Building2 className="h-4 w-4 shrink-0 text-sky-600 mt-0.5" />
+                      <span className="break-words leading-snug">
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mr-1.5">Relevanta jobb:</span>
+                        <span className="font-medium text-foreground/80">
+                          {(candidate.relevantJobs || candidate.previousRoles)?.join(" • ")}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Match Score pill */}

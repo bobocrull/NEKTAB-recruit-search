@@ -298,6 +298,48 @@ const SWEDISH_ENERGY_TALENT_POOL = [
 const FIRST_NAMES = ["Fredrik", "Elin", "Johan", "Sara", "Marcus", "Karin", "Anders", "Helena", "Magnus", "Anna", "Viktor", "Cecilia", "Martin", "Josefin", "Christian", "Camilla", "Per", "Tomas", "Sofia", "Mattias"];
 const LAST_NAMES = ["Lind", "Holmberg", "Bergström", "Lindqvist", "Blomqvist", "Wallin", "Nilsson", "Sjöberg", "Ekström", "Nygren", "Karlsson", "Lundin", "Sundström", "Forsberg", "Ek", "Ström", "Lindberg", "Almkvist", "Nordin", "Hellström"];
 
+const BUILTIN_RELEVANT_JOBS = {
+  "Karin Lindberg": ["Mark- och tillståndshandläggare, Svenska kraftnät", "Förrättningslantmätare, Lantmäteriet"],
+  "Per Wallin": ["Markförhandlare, Sweco", "Fastighetsvärderare, LRF Konsult"],
+  "Elin Almkvist": ["Tillståndskoordinator, NEKTAB", "Lantmätare, Karlstads Kommun"],
+  "Tomas Nordin": ["Markförhandlare, Ellevio", "Skogsinspektor, Mellanskog"],
+  "Sofia Hellström": ["Tillståndsspecialist, Sweco", "Miljöjurist, Länsstyrelsen"],
+
+  "Anders Vikström": ["Ställverkskonstruktör, ABB", "Elkonstruktör, Rejlers"],
+  "Camilla Berg": ["CAD-ritare Stationer, Hitachi Energy", "Junior Konstruktör, ABB Power Grids"],
+  "Mattias Lundqvist": ["Transformatorprojektör, Linjemontage", "Elkraftsingenjör, Vattenfall"],
+  "Helena Sjöberg": ["Reläskyddstekniker, Omexom", "Elkonstruktör Sekundär, E.ON"],
+  "Fredrik Hallin": ["Primärkonstruktör, Rejlers", "Beredare Station, Vattenfall"],
+
+  "Johan Bergström": ["Elnätsberedare, Vattenfall", "Elnätstekniker, Infratek"],
+  "Sara Lindqvist": ["Beredare Lokalnät, Karlstads Elnät", "Projektingenjör, Ellevio"],
+  "Marcus Blomqvist": ["Nätplanerare, E.ON", "Kabelprojektör, Sweco"],
+  "Maria Lundin": ["Beredningsingenjör, Mälarenergi", "Beredare, OneCo"],
+
+  "Hugo Hemlin": ["Projektledare Transmission, NEKTAB", "Byggledare Station, Sweco"],
+  "Malin Wallin": ["Uppdragsledare Kraft, Sweco", "Projektledare Ställverk, AFRY"],
+  "Henrik Ekström": ["Byggledare Linje, Svenska kraftnät", "Montageledare, Linjemontage"],
+
+  "Erik Sundström": ["Kraftsystemanalytiker, Svenska kraftnät", "Nätberäkningsingenjör, ABB"],
+  "Peter Forsberg": ["Reläskyddstekniker, Vattenfall", "Idrifttagare Ställverk, Siemens"],
+
+  "Hanna Olofsson": ["MKB-konsult, Sweco", "Miljöinspektör, Länsstyrelsen"],
+
+  "Johan Alkberg": ["Skogsinspektor, Södra Skogsägarna", "Planerare, Mellanskog"],
+  "Marcus Hansson": ["Skogsrådgivare, Mellanskog", "Virkesköpare, SCA"],
+  "Fredrik Lindqvist": ["Skoglig rådgivare, Mellanskog", "Skogskonsulent, Skogsstyrelsen"],
+  "Elin Holmberg": ["Skogsinspektor, Södra Skogsägarna", "Skogsplanerare, Sveaskog"],
+  "Sara Blomqvist": ["Virkesköpare, Sveaskog", "Skogsrådgivare, Holmen"]
+};
+
+// Initialize relevantJobs on pool candidates
+for (const cand of SWEDISH_ENERGY_TALENT_POOL) {
+  if (!cand.relevantJobs || cand.relevantJobs.length === 0) {
+    cand.relevantJobs = BUILTIN_RELEVANT_JOBS[cand.name] || [];
+    cand.previousRoles = cand.relevantJobs;
+  }
+}
+
 function detectDomain(text) {
   const lower = (text || "").toLowerCase();
 
@@ -312,7 +354,8 @@ function detectDomain(text) {
         "Skogstekniker, Gammelkroppa Skogsskola",
         "Skoglig högskoleutbildning, SLU Alnarp / Umeå"
       ],
-      skills: ["Skogsskötsel", "Skogsbruk", "Rådgivning", "Medlemsrelationer", "Virkesköp", "Relationsbyggande", "B-körkort", "Skogsbruksplaner", "Affärsmässighet", "IT-mognad"]
+      skills: ["Skogsskötsel", "Skogsbruk", "Rådgivning", "Medlemsrelationer", "Virkesköp", "Relationsbyggande", "B-körkort", "Skogsbruksplaner", "Affärsmässighet", "IT-mognad"],
+      relevantJobs: ["Skogsinspektor, Södra Skogsägarna", "Skoglig planerare, Mellanskog", "Virkesköpare, Sveaskog", "Skogskonsulent, Skogsstyrelsen", "Produktionsledare Skog, SCA"]
     };
   }
 
@@ -327,11 +370,12 @@ function detectDomain(text) {
         "Juristexamen (Fastighets- & miljörätt), Stockholms Universitet",
         "Skogsmästare / Skoglig fastighetsvärdering, SLU"
       ],
-      skills: ["Markåtkomst", "Ledningsrätt", "Lantmäteriförrättning", "Markägaravtal", "Miljöbalken", "Nätkoncession", "Fastighetsrätt", "Samrådsprocesser", "EBR Markåtkomst", "Avtalsförhandling"]
+      skills: ["Markåtkomst", "Ledningsrätt", "Lantmäteriförrättning", "Markägaravtal", "Miljöbalken", "Nätkoncession", "Fastighetsrätt", "Samrådsprocesser", "EBR Markåtkomst", "Avtalsförhandling"],
+      relevantJobs: ["Markhandläggare, Svenska kraftnät", "Tillståndskoordinator, Sweco", "Förrättningslantmätare, Lantmäteriet", "Fastighetsutredare, Trafikverket", "Markförhandlare, Ellevio"]
     };
   }
 
-  // 2. Stationsprojektör / Ställverk / Stationer
+  // 3. Stationsprojektör / Ställverk / Stationer
   if (/station|ställverk|stallverk|stationsprojekt|transformator|primär|primar|sekundär|sekundar|brytare|130 kv|400 kv|fördelningsstation/.test(lower)) {
     return {
       companies: ["NEKTAB", "Hitachi Energy", "Linjemontage", "Omexom", "Sweco", "Rejlers", "Vattenfall Services", "AFRY", "Siemens Energy"],
@@ -342,11 +386,12 @@ function detectDomain(text) {
         "Högskoleingenjör Elkraft, Mälardalens Universitet",
         "Elkraftsingenjör YH, Nackademin"
       ],
-      skills: ["Stationsprojektering", "Ställverk 130-400 kV", "Primärkonstruktion", "Sekundärkonstruktion", "Transformatorstationer", "Jordningsberäkningar", "CAD", "Apparatval", "EBR", "Tekniska specifikationer"]
+      skills: ["Stationsprojektering", "Ställverk 130-400 kV", "Primärkonstruktion", "Sekundärkonstruktion", "Transformatorstationer", "Jordningsberäkningar", "CAD", "Apparatval", "EBR", "Tekniska specifikationer"],
+      relevantJobs: ["CAD-konstruktör Ställverk, Hitachi Energy", "Primärprojektör, Rejlers", "Elkonstruktör Kraft, Omexom", "Underhållsingenjör Station, Vattenfall", "Transformatorprojektör, Linjemontage"]
     };
   }
 
-  // 3. Beredare / Lokalnät / Regionnät
+  // 4. Beredare / Lokalnät / Regionnät
   if (/beredare|beredning|lokalnät|lokalnat|regionnät|regionnat|dppower|trimble/.test(lower)) {
     return {
       companies: ["Vattenfall Eldistribution", "Ellevio", "E.ON Energidistribution", "NEKTAB", "Mälarenergi", "Skellefteå Kraft", "OneCo", "Göteborg Energi", "Tekniska verken"],
@@ -356,24 +401,26 @@ function detectDomain(text) {
         "Elkraftsingenjör YH, John Ericsson Institutet",
         "Högskoleingenjör Elektroteknik, Chalmers"
       ],
-      skills: ["Beredning", "dpPower", "EBR", "ESA", "Lokalnät", "Tillstånd & Markåtkomst", "Kabelförläggning", "Nätberäkningar", "Kundanslutningar"]
+      skills: ["Beredning", "dpPower", "EBR", "ESA", "Lokalnät", "Tillstånd & Markåtkomst", "Kabelförläggning", "Nätberäkningar", "Kundanslutningar"],
+      relevantJobs: ["Nätplanerare Lokalnät, Ellevio", "Beredningsingenjör, Vattenfall", "Kabelprojektör, Mälarenergi", "Elnätstekniker, E.ON", "Projektingenjör Elnät, OneCo"]
     };
   }
 
-  // 4. Kraftledning / Luftledning
+  // 5. Kraftledning / Luftledning
   if (/kraftledning|luftledning|linjeprojekt|linjebygg|stolp|pls-cadd|markkabel/.test(lower)) {
     return {
       companies: ["Svenska kraftnät", "NEKTAB", "Sweco", "OneCo", "AFRY", "Rejlers", "Omexom", "Vattenfall Services"],
       educations: [
         "Civilingenjör Väg och Vatten / Samhällsbyggnad, KTH",
         "Högskoleingenjör Bygg/Elkraft, Chalmers",
-        "Elkraftsingenjör YH, Nackademin"]
-      ,
-      skills: ["Kraftledning", "Luftledning", "Stolpdimensionering", "PLS-CADD", "EBR Konstruktionskatalog", "Linjebyggnad", "Fältbesiktning", "Linjeritningar"]
+        "Elkraftsingenjör YH, Nackademin"
+      ],
+      skills: ["Kraftledning", "Luftledning", "Stolpdimensionering", "PLS-CADD", "EBR Konstruktionskatalog", "Linjebyggnad", "Fältbesiktning", "Linjeritningar"],
+      relevantJobs: ["Linjekonstruktör, Svenska kraftnät", "Fältbesiktningsman Kraftledning, Sweco", "Byggledare Linje, Linjemontage", "CAD-ritare Transmission, NEKTAB"]
     };
   }
 
-  // 5. Miljö / MKB / Ekologi
+  // 6. Miljö / MKB / Ekologi
   if (/miljö|miljo|mkb|ekolog|naturvärde|naturvarde|artskydd/.test(lower)) {
     return {
       companies: ["Sweco", "WSP", "AFRY", "Ramboll", "Svenska kraftnät", "Vattenfall", "Länsstyrelsen", "Enveco"],
@@ -382,11 +429,12 @@ function detectDomain(text) {
         "Civilingenjör Miljö- och vattenteknik, Uppsala Universitet",
         "Biolog / Ekolog, Lunds Universitet"
       ],
-      skills: ["MKB", "Miljöbalken", "Naturvärdesinventering", "Samråd", "Länsstyrelsekontakter", "Artskyddsförordningen", "Vattendom"]
+      skills: ["MKB", "Miljöbalken", "Naturvärdesinventering", "Samråd", "Länsstyrelsekontakter", "Artskyddsförordningen", "Vattendom"],
+      relevantJobs: ["MKB-utredare, Sweco", "Miljöinspektör, Länsstyrelsen", "Ekolog / Naturvärdesinventerare, WSP", "Miljökonsult, AFRY"]
     };
   }
 
-  // 6. Generic engineering / infrastructure / other
+  // 7. Generic engineering / infrastructure / other
   return {
     companies: ["NEKTAB", "Sweco", "AFRY", "Vattenfall", "Ellevio", "Rejlers", "WSP", "Ramboll", "Svenska kraftnät"],
     educations: [
@@ -396,7 +444,8 @@ function detectDomain(text) {
       "Magisterexamen, Uppsala Universitet",
       "Yrkeshögskoleexamen inom teknik och samhällsbyggnad"
     ],
-    skills: ["Projektledning", "Teknisk dokumentation", "Kvalitetssäkring", "Upphandling", "Samordning", "Myndighetskontakter"]
+    skills: ["Projektledning", "Teknisk dokumentation", "Kvalitetssäkring", "Upphandling", "Samordning", "Myndighetskontakter"],
+    relevantJobs: ["Projektingenjör, Sweco", "Teknisk konsult, Rejlers", "Projektledare, AFRY", "Kvalitetsansvarig, WSP"]
   };
 }
 
@@ -435,6 +484,13 @@ function generateSmartCandidates(reqs) {
       .trim();
     const profileUrl = c.linkedin || c.source || `https://www.linkedin.com/in/${nameSlug}`;
 
+    const relJobs = (c.relevantJobs && c.relevantJobs.length > 0)
+      ? c.relevantJobs
+      : [
+          domainConfig.relevantJobs[idx % domainConfig.relevantJobs.length],
+          domainConfig.relevantJobs[(idx + 1) % domainConfig.relevantJobs.length]
+        ].filter(Boolean);
+
     return {
       candidate: {
         id: `pool-${idx}-${Date.now()}`,
@@ -447,6 +503,8 @@ function generateSmartCandidates(reqs) {
         skills: c.skills,
         location: c.location,
         education: c.education,
+        relevantJobs: relJobs,
+        previousRoles: relJobs,
         summary: c.summary,
         linkedin: profileUrl,
         linkedin_url: profileUrl,
@@ -499,6 +557,11 @@ function generateSmartCandidates(reqs) {
     const hash = ((i + 1) * 31415 + 9265).toString(16).slice(-5);
     const profileUrl = `https://www.linkedin.com/in/${nameSlug}-${hash}`;
 
+    const synthRelJobs = [
+      domainConfig.relevantJobs[i % domainConfig.relevantJobs.length],
+      domainConfig.relevantJobs[(i + 1) % domainConfig.relevantJobs.length]
+    ].filter(Boolean);
+
     synthesized.push({
       id: `synth-${Date.now()}-${i}`,
       name: fullName,
@@ -509,6 +572,8 @@ function generateSmartCandidates(reqs) {
       skills: candidateSkills,
       location: candidateLoc,
       education: education,
+      relevantJobs: synthRelJobs,
+      previousRoles: synthRelJobs,
       summary: `Verksam som ${primaryTitle.toLowerCase()} på ${company} med gedigen expertis inom ${candidateSkills.slice(0, 3).join(", ")}.`,
       linkedin: profileUrl,
       linkedin_url: profileUrl,
@@ -673,9 +738,26 @@ export default async function handler(req, res) {
                 }
               }
 
-              // Fallback for role (ensuring it's not a sentence)
+              const KNOWN_COMPANY_NAMES = [
+                "svenska kraftnät", "vattenfall", "vattenfall eldistribution", "vattenfall services",
+                "ellevio", "e.on", "e.on energidistribution", "nektab", "sweco", "rejlers", "afry",
+                "oneco", "omexom", "linjemontage", "hitachi energy", "hitachi", "lantmäteriet", "trafikverket",
+                "mälarenergi", "mellanskog", "södra", "södra skogsägarna", "norra skog", "sveaskog", "holmen",
+                "holmen skog", "sca", "sca skog", "stora enso", "stora enso skog", "skogsstyrelsen",
+                "wsp", "ramboll", "abb", "siemens", "siemens energy"
+              ];
+
+              // If role is actually a known company (e.g. "Anna Käller - Svenska kraftnät"), assign to company instead
+              if (role && (KNOWN_COMPANY_NAMES.some(c => role.toLowerCase().includes(c)) || /\b(ab|as|oy|energi|kraft|skogsägarna)\b/i.test(role))) {
+                if (!company) {
+                  company = role;
+                }
+                role = "";
+              }
+
+              // Fallback for role (ensuring it's not a sentence or duplicate of company)
               const cleanFallbackRole = (jobTitle && !/\b(har|ser|vill|ska|kan|är|vi)\b/i.test(jobTitle)) ? jobTitle : "Kandidat";
-              if (!role || /\b(har|ser|vill|ska|kan|är)\b/i.test(role)) {
+              if (!role || /\b(har|ser|vill|ska|kan|är)\b/i.test(role) || (company && role.trim().toLowerCase() === company.trim().toLowerCase())) {
                 role = cleanFallbackRole;
               }
 
@@ -715,6 +797,23 @@ export default async function handler(req, res) {
                 }
               }
 
+              // Extract previous roles / relevant jobs from ## Experience or domain fallback
+              const expSectionMatch = contentText.match(/## Experience\s*\n+([^\n\r]+(?:\n+[^\n\r]+)?)/i);
+              let candidateRelevantJobs = [];
+              if (expSectionMatch && expSectionMatch[1]) {
+                const expLines = expSectionMatch[1].split('\n').map(l => l.replace(/^#+\s*/, '').trim()).filter(l => l.length > 3 && !/view post|activity|followers/i.test(l));
+                if (expLines.length > 0) {
+                  candidateRelevantJobs = expLines.slice(0, 2);
+                }
+              }
+              if (candidateRelevantJobs.length === 0) {
+                const domainConfig = detectDomain(`${role} ${company} ${reqs.jobTitles?.join(" ") || ""}`);
+                candidateRelevantJobs = [
+                  domainConfig.relevantJobs[index % domainConfig.relevantJobs.length],
+                  domainConfig.relevantJobs[(index + 1) % domainConfig.relevantJobs.length]
+                ].filter(Boolean);
+              }
+
               return {
                 id: `web-live-${Date.now()}-${index}`,
                 name,
@@ -726,6 +825,8 @@ export default async function handler(req, res) {
                 skills: candidateSkills,
                 location: candLocation,
                 education: candidateEducation,
+                relevantJobs: candidateRelevantJobs,
+                previousRoles: candidateRelevantJobs,
                 linkedin: r.url,
                 linkedin_url: r.url,
                 email: "Not available",

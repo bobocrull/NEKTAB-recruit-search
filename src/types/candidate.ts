@@ -19,6 +19,8 @@ export interface Candidate {
   integrationStatus?: "Ej exporterad" | "Redo för export" | "Exporterad" | "Skickad till Cinode";
   education?: string;
   summary?: string;
+  relevantJobs?: string[];
+  previousRoles?: string[];
 }
 
 export type CandidateSourceCategory =

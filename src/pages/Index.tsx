@@ -339,14 +339,84 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
     }
   }
 
-  // Contextual fallback triggers for explicit requirements
-  if (/b-körkort/i.test(lowerText) && !keySkills.includes("B-körkort")) keySkills.push("B-körkort");
-  if (/skogsbruk/i.test(lowerText) && !keySkills.includes("Skogsbruk")) keySkills.push("Skogsbruk");
-  if (/skogsskötsel/i.test(lowerText) && !keySkills.includes("Skogsskötsel")) keySkills.push("Skogsskötsel");
+  // 4B. Extract explicit bullet requirements (common in Swedish job ads)
+  const lines = text.split('\n');
+  for (const l of lines) {
+    const m = l.trim().match(/^[-•*]\s+(.*)$/);
+    if (m) {
+      let bullet = m[1].trim();
+      bullet = bullet
+        .replace(/^har\s+(en\s+|ett\s+|god\s+|goda\s+förståelse\s+för\s+|god\s+förståelse\s+för\s+)?/i, '')
+        .replace(/^erfarenhet\s+av\s+/i, '')
+        .replace(/^kunskap\s+(om|inom)\s+/i, '')
+        .replace(/^förmåga\s+att\s+/i, '')
+        .replace(/^utbildning\s+inom\s+/i, '');
+      bullet = bullet.split(/\s+(?:då|eller motsvarande|, vilket|i syfte)\b/i)[0].trim();
+      if (bullet.length > 0) {
+        bullet = bullet.charAt(0).toUpperCase() + bullet.slice(1);
+      }
+      
+      // Convert bullet phrases to clean requirement tags
+      if (/skogsbruksplan/i.test(bullet)) {
+        if (!keySkills.includes("Skogsbruksplaner")) keySkills.push("Skogsbruksplaner");
+      } else if (/skoglig.*ekonomi/i.test(bullet)) {
+        if (!keySkills.includes("Skoglig ekonomi")) keySkills.push("Skoglig ekonomi");
+      } else if (/skoglig.*utbildning|högskoleutbildning/i.test(bullet)) {
+        if (!keySkills.includes("Skoglig högskoleutbildning")) keySkills.push("Skoglig högskoleutbildning");
+      } else if (/b-körkort|körkort/i.test(bullet)) {
+        if (!keySkills.includes("B-körkort")) keySkills.push("B-körkort");
+      } else if (/helhetssyn/i.test(bullet)) {
+        if (!keySkills.includes("Helhetssyn & Biologi")) keySkills.push("Helhetssyn & Biologi");
+      } else if (bullet.length >= 3 && bullet.length <= 40 && !keySkills.includes(bullet)) {
+        keySkills.push(bullet);
+      }
+    }
+  }
+
+  // 4C. Flexible Swedish stem & domain triggers
   if (/rådgiv/i.test(lowerText) && !keySkills.includes("Rådgivning")) keySkills.push("Rådgivning");
+  if (/skoglig/i.test(lowerText) && !keySkills.includes("Skogsbruk")) keySkills.push("Skogsbruk");
+  if (/skötsel/i.test(lowerText) && !keySkills.includes("Skogsskötsel")) keySkills.push("Skogsskötsel");
+  if (/virke/i.test(lowerText) && !keySkills.includes("Virkesköp")) keySkills.push("Virkesköp");
   if (/relation/i.test(lowerText) && !keySkills.includes("Relationsbyggande")) keySkills.push("Relationsbyggande");
+  if (/medlem/i.test(lowerText) && !keySkills.includes("Medlemsrelationer")) keySkills.push("Medlemsrelationer");
+  if (/pedagogisk/i.test(lowerText) && !keySkills.includes("Pedagogiskt förhållningssätt")) keySkills.push("Pedagogiskt förhållningssätt");
+  if (/ekonomi/i.test(lowerText) && !keySkills.includes("Skoglig ekonomi")) keySkills.push("Skoglig ekonomi");
+  if (/samarbete/i.test(lowerText) && !keySkills.includes("Samarbetsförmåga")) keySkills.push("Samarbetsförmåga");
   if (/affär/i.test(lowerText) && !keySkills.includes("Affärsmässighet")) keySkills.push("Affärsmässighet");
+  if (/självständig/i.test(lowerText) && !keySkills.includes("Självständigt arbete")) keySkills.push("Självständigt arbete");
+  if (/b-körkort|körkort/i.test(lowerText) && !keySkills.includes("B-körkort")) keySkills.push("B-körkort");
   if (/it-mognad/i.test(lowerText) && !keySkills.includes("IT-mognad")) keySkills.push("IT-mognad");
+
+  // Education triggers
+  if (/skoglig.*(högskola|utbildning)|jägmästare|skogsmästare/i.test(lowerText) && !keySkills.includes("Skoglig högskoleutbildning")) keySkills.push("Skoglig högskoleutbildning");
+  if (/civilingenjör/i.test(lowerText) && !keySkills.includes("Civilingenjör")) keySkills.push("Civilingenjör");
+  if (/högskoleingenjör/i.test(lowerText) && !keySkills.includes("Högskoleingenjör")) keySkills.push("Högskoleingenjör");
+  if (/lantmät/i.test(lowerText) && !keySkills.includes("Lantmätare / Samhällsbyggnad")) keySkills.push("Lantmätare / Samhällsbyggnad");
+
+  // Mark & Tillstånd triggers
+  if (/ledningsrätt/i.test(lowerText) && !keySkills.includes("Ledningsrätt")) keySkills.push("Ledningsrätt");
+  if (/nätkoncession|koncession/i.test(lowerText) && !keySkills.includes("Nätkoncession")) keySkills.push("Nätkoncession");
+  if (/miljöbalk/i.test(lowerText) && !keySkills.includes("Miljöbalken")) keySkills.push("Miljöbalken");
+  if (/fastighetsrätt/i.test(lowerText) && !keySkills.includes("Fastighetsrätt")) keySkills.push("Fastighetsrätt");
+  if (/markåtkomst/i.test(lowerText) && !keySkills.includes("Markåtkomst")) keySkills.push("Markåtkomst");
+  if (/markäg|markförhandl/i.test(lowerText) && !keySkills.includes("Markförhandling")) keySkills.push("Markförhandling");
+  if (/samråd/i.test(lowerText) && !keySkills.includes("Samrådsprocesser")) keySkills.push("Samrådsprocesser");
+
+  // Stationsprojektering triggers
+  if (/ställverk/i.test(lowerText) && !keySkills.includes("Ställverk")) keySkills.push("Ställverk");
+  if (/station/i.test(lowerText) && !keySkills.includes("Stationsprojektering")) keySkills.push("Stationsprojektering");
+  if (/transformator/i.test(lowerText) && !keySkills.includes("Transformatorstationer")) keySkills.push("Transformatorstationer");
+  if (/primär/i.test(lowerText) && !keySkills.includes("Primärkonstruktion")) keySkills.push("Primärkonstruktion");
+  if (/sekundär/i.test(lowerText) && !keySkills.includes("Sekundärkonstruktion")) keySkills.push("Sekundärkonstruktion");
+  if (/cad|autocad/i.test(lowerText) && !keySkills.includes("CAD / AutoCAD")) keySkills.push("CAD / AutoCAD");
+
+  // Beredning triggers
+  if (/bered/i.test(lowerText) && !keySkills.includes("Beredning")) keySkills.push("Beredning");
+  if (/dppower/i.test(lowerText) && !keySkills.includes("dpPower")) keySkills.push("dpPower");
+  if (/trimble|nis/i.test(lowerText) && !keySkills.includes("Trimble NIS")) keySkills.push("Trimble NIS");
+  if (/kabelförläggning/i.test(lowerText) && !keySkills.includes("Kabelförläggning")) keySkills.push("Kabelförläggning");
+  if (/ebr/i.test(lowerText) && !keySkills.includes("EBR")) keySkills.push("EBR");
 
   // 5. Industries
   const industries: string[] = [];
@@ -355,6 +425,7 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
   if (/elnät|elkraft|energi|kraftledning|ställverk|station/i.test(lowerText)) industries.push("Elnät, Elkraft & Energi");
   if (/infrastruktur|samhällsbyggnad/i.test(lowerText)) industries.push("Infrastruktur & Samhällsbyggnad");
   if (/konsult/i.test(lowerText)) industries.push("Teknisk konsultverksamhet");
+  if (/miljö|biologi|biologisk|ekologi|naturvård/i.test(lowerText)) industries.push("Miljö & Naturvård");
 
   // 6. Target Companies
   const targetCompanies: string[] = [];
@@ -394,7 +465,7 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
   return {
     seniorityLevel,
     yearsOfExperience,
-    keySkills: keySkills.slice(0, 10),
+    keySkills: keySkills.slice(0, 15),
     industries,
     jobTitles,
     targetCompanies,
@@ -951,20 +1022,27 @@ export default function Index() {
           return data.candidates.map((c: any) => ({
             id: c.id,
             name: c.name,
-            current_role: c.currentRole || c.current_role || "Kompetens inom elnät / elkraft",
+            currentRole: c.currentRole || c.current_role || reqs.jobTitles?.[0] || "Kandidat",
+            current_role: c.currentRole || c.current_role || reqs.jobTitles?.[0] || "Kandidat",
             company: c.company || "Okänt bolag",
+            yearsOfExperience: Number(c.yearsOfExperience || c.years_of_experience || 3),
             years_of_experience: Number(c.yearsOfExperience || c.years_of_experience || 3),
             skills: c.skills || [],
             location: c.location || "Sverige",
+            linkedin: c.linkedin || c.linkedin_url || "",
             linkedin_url: c.linkedin || c.linkedin_url || "",
             email: c.email || "Not available",
             phone: c.phone || "Not available",
+            avatarUrl: c.avatarUrl || "",
             avatar_url: c.avatarUrl || "",
+            profileImageUrl: c.profileImageUrl || "",
             profile_image_url: c.profileImageUrl || "",
             summary: c.summary || "",
             source: c.source || "Web",
             sourceCategory: c.sourceCategory || (c.linkedin?.includes("linkedin.com") ? "LinkedIn" : "Öppen webb"),
-            education: c.education || ""
+            education: c.education || "",
+            relevantJobs: c.relevantJobs || c.previousRoles || [],
+            previousRoles: c.relevantJobs || c.previousRoles || []
           }));
         }
       }
@@ -1171,7 +1249,9 @@ export default function Index() {
             sourceCategory: c.sourceCategory || "LinkedIn",
             evidenceSnippets: [],
             networkSignals: [],
-            education: c.education || extractEducationFromText(c.summary || "", c.current_role || c.currentRole || "", c.company || "")
+            education: c.education || extractEducationFromText(c.summary || "", c.current_role || c.currentRole || "", c.company || ""),
+            relevantJobs: c.relevantJobs || c.previousRoles || [],
+            previousRoles: c.relevantJobs || c.previousRoles || []
           }));
         } else {
           webCandidates = generateSmartCandidates(reqs);
