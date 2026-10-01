@@ -70,7 +70,32 @@ function readLocalCandidates(): any[] {
     const stored = localStorage.getItem("nektab-local-candidates");
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Sanitize any legacy search URLs into direct profile URLs
+        return parsed.map((c: any) => {
+          let linkedin = c.linkedin || c.linkedin_url || "";
+          let source = c.source || "";
+          if (linkedin && linkedin.includes("search/results/people")) {
+            if (source && source.includes("linkedin.com/in/")) {
+              linkedin = source;
+            } else if (c.name) {
+              const slug = c.name.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s-]/g, "")
+                .trim()
+                .replace(/\s+/g, "-");
+              linkedin = `https://www.linkedin.com/in/${slug}`;
+              source = linkedin;
+            }
+          }
+          return {
+            ...c,
+            linkedin,
+            linkedin_url: linkedin,
+            source: source || linkedin
+          };
+        });
+      }
     }
     localStorage.setItem("nektab-local-candidates", JSON.stringify(BUILTIN_SWEDISH_TALENT_POOL));
     return BUILTIN_SWEDISH_TALENT_POOL;

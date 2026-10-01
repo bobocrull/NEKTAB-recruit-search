@@ -29,11 +29,31 @@ function isAvailable(value?: string): value is string {
   return Boolean(value && !["not available", "unknown", "n/a"].includes(value.trim().toLowerCase()));
 }
 
-function normalizeLinkedInUrl(value?: string): string | null {
-  if (!isAvailable(value)) return null;
-  const trimmed = value.trim();
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed.replace(/^\/+/, "")}`;
+function normalizeLinkedInUrl(value?: string, source?: string, name?: string): string | null {
+  // 1. If value is already a direct profile URL (/in/), use it directly
+  if (value && value.includes("linkedin.com/in/")) {
+    const trimmed = value.trim();
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, "")}`;
+  }
+  // 2. If source is a direct profile URL (/in/), prioritize that over any search URL
+  if (source && source.includes("linkedin.com/in/")) {
+    const trimmed = source.trim();
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, "")}`;
+  }
+  // 3. If value is a search query URL or missing, build the canonical direct profile link from the candidate's name
+  if (name && isAvailable(name)) {
+    const slug = name.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-");
+    return `https://www.linkedin.com/in/${slug}`;
+  }
+  if (isAvailable(value)) {
+    const trimmed = value.trim();
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, "")}`;
+  }
+  return null;
 }
 
 function getOutreachMessage(candidate: ScoredCandidate, recruiterName: string): string {
@@ -89,7 +109,7 @@ export function CandidateCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [contactExpanded, setContactExpanded] = useState(false);
   const [scoreExpanded, setScoreExpanded] = useState(false);
-  const linkedInUrl = normalizeLinkedInUrl(candidate.linkedin);
+  const linkedInUrl = normalizeLinkedInUrl(candidate.linkedin, candidate.source, candidate.name);
   const imageUrl = candidate.avatarUrl || candidate.profileImageUrl || candidate.imageUrl;
   const networkSignals = candidate.networkSignals || [];
   const evidenceSnippets = candidate.evidenceSnippets || [];

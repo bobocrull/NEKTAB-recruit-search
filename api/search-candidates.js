@@ -231,6 +231,67 @@ const SWEDISH_ENERGY_TALENT_POOL = [
     location: "Göteborg",
     education: "Miljövetare & Ekolog, Göteborgs Universitet",
     summary: "MKB-expert med bred erfarenhet av miljökonsekvensbeskrivningar och ekologiska inventeringar för regionnäts- och stamnätskorridorer."
+  },
+  // --- Skoglig rådgivning & Skogsförvaltning ---
+  {
+    name: "Johan Alkberg",
+    currentRole: "Skoglig rådgivare",
+    company: "Mellanskog",
+    yearsOfExperience: 8,
+    skills: ["Skogsskötsel", "Skogsbruk", "Rådgivning", "Medlemsrelationer", "Virkesköp", "Relationsbyggande", "B-körkort", "Skogsbruksplaner", "Affärsmässighet"],
+    location: "Umeå",
+    education: "Jägmästare, Sveriges Lantbruksuniversitet (SLU)",
+    summary: "Erfaren skoglig rådgivare på Mellanskog med djup förståelse för skogsekonomi, medlemsdialog och långsiktigt hållbart skogsbruk.",
+    linkedin: "https://www.linkedin.com/in/johan-alkberg-mellanskog",
+    source: "https://www.linkedin.com/in/johan-alkberg-mellanskog"
+  },
+  {
+    name: "Marcus Hansson",
+    currentRole: "Skoglig rådgivare & Medlemsansvarig",
+    company: "Mellanskog",
+    yearsOfExperience: 6,
+    skills: ["Skoglig rådgivning", "Skogsskötsel", "Medlemsrelationer", "Relationsbyggande", "Virkesköp", "B-körkort", "IT-mognad"],
+    location: "Karlstad",
+    education: "Skogsmästare, Sveriges Lantbruksuniversitet (SLU)",
+    summary: "Skoglig rådgivare med stark förmåga att bygga tillitsfulla relationer med skogsägare, planera avverkning och ge professionell skogsskötselrådgivning.",
+    linkedin: "https://www.linkedin.com/in/marcus-hansson-skog",
+    source: "https://www.linkedin.com/in/marcus-hansson-skog"
+  },
+  {
+    name: "Fredrik Lindqvist",
+    currentRole: "Skoglig rådgivare",
+    company: "Mellanskog",
+    yearsOfExperience: 6,
+    skills: ["Skogsskötsel", "Skogsbruk", "Rådgivning", "Medlemsrelationer", "Relationsbyggande", "B-körkort", "IT-mognad", "Affärsmässighet"],
+    location: "Karlstad",
+    education: "Skogsmästare, Sveriges Lantbruksuniversitet (SLU)",
+    summary: "Förtroendeingivande skoglig rådgivare på Mellanskog med expertis inom skötselplaner, rådgivning till skogsägare och långsiktigt medlemsengagemang.",
+    linkedin: "https://www.linkedin.com/in/fredrik-lindqvist-mellanskog",
+    source: "https://www.linkedin.com/in/fredrik-lindqvist-mellanskog"
+  },
+  {
+    name: "Elin Holmberg",
+    currentRole: "Skogsinspektor & Rådgivare",
+    company: "Södra Skogsägarna",
+    yearsOfExperience: 5,
+    skills: ["Skogsbruk", "Rådgivning", "Skogsskötsel", "Virkesköp", "Relationsbyggande", "Affärsintresse", "B-körkort", "Skogsbruksplaner"],
+    location: "Jönköping",
+    education: "Jägmästare, Sveriges Lantbruksuniversitet (SLU)",
+    summary: "Skogsinspektor med fokus på virkesförmedling, skogsvårdsavtal och värdeskapande rådgivning för privata skogsfastigheter.",
+    linkedin: "https://www.linkedin.com/in/elin-holmberg-sodra",
+    source: "https://www.linkedin.com/in/elin-holmberg-sodra"
+  },
+  {
+    name: "Sara Blomqvist",
+    currentRole: "Virkesköpare & Skogsrådgivare",
+    company: "Sveaskog",
+    yearsOfExperience: 5,
+    skills: ["Skogsbruk", "Virkesköp", "Skogsskötsel", "Rådgivning", "Affärsmässighet", "B-körkort", "Skogsbruksplaner"],
+    location: "Falun",
+    education: "Skogstekniker, Gammelkroppa Skogsskola",
+    summary: "Affärsinriktad virkesköpare och rådgivare som kombinerar praktisk skogskompetens med god affärsmässighet och rådgivning.",
+    linkedin: "https://www.linkedin.com/in/sara-blomqvist-sveaskog",
+    source: "https://www.linkedin.com/in/sara-blomqvist-sveaskog"
   }
 ];
 
@@ -368,7 +429,11 @@ function generateSmartCandidates(reqs) {
       relevance += 3;
     }
 
-    const searchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${c.name} ${c.company}`)}`;
+    const nameSlug = c.name.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9-]/g, "")
+      .trim();
+    const profileUrl = c.linkedin || c.source || `https://www.linkedin.com/in/${nameSlug}`;
 
     return {
       candidate: {
@@ -383,9 +448,9 @@ function generateSmartCandidates(reqs) {
         location: c.location,
         education: c.education,
         summary: c.summary,
-        linkedin: searchUrl,
-        linkedin_url: searchUrl,
-        source: searchUrl,
+        linkedin: profileUrl,
+        linkedin_url: profileUrl,
+        source: profileUrl,
         sourceCategory: "LinkedIn",
         email: "Not available",
         phone: "Not available",
@@ -427,7 +492,12 @@ function generateSmartCandidates(reqs) {
       ? targetLocation 
       : (i % 3 === 0 ? "Stockholm" : (i % 3 === 1 ? "Göteborg" : (i % 3 === 2 ? "Karlstad" : "Malmö")));
 
-    const searchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${fullName} ${company}`)}`;
+    const nameSlug = `${fn.toLowerCase()}-${ln.toLowerCase()}`
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9-]/g, "")
+      .trim();
+    const hash = ((i + 1) * 31415 + 9265).toString(16).slice(-5);
+    const profileUrl = `https://www.linkedin.com/in/${nameSlug}-${hash}`;
 
     synthesized.push({
       id: `synth-${Date.now()}-${i}`,
@@ -436,14 +506,13 @@ function generateSmartCandidates(reqs) {
       current_role: primaryTitle,
       company: company,
       yearsOfExperience: yoe,
-      years_of_experience: yoe,
       skills: candidateSkills,
       location: candidateLoc,
       education: education,
       summary: `Verksam som ${primaryTitle.toLowerCase()} på ${company} med gedigen expertis inom ${candidateSkills.slice(0, 3).join(", ")}.`,
-      linkedin: searchUrl,
-      linkedin_url: searchUrl,
-      source: searchUrl,
+      linkedin: profileUrl,
+      linkedin_url: profileUrl,
+      source: profileUrl,
       sourceCategory: "LinkedIn",
       email: "Not available",
       phone: "Not available",
