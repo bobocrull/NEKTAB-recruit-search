@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, Briefcase, Clock, Database, Mail, Phone, Linkedin, Download, ChevronDown, ChevronUp, Copy, AlertTriangle, Search, Sparkles, Network, FileSearch, GraduationCap } from "lucide-react";
+import { MapPin, Briefcase, Clock, Database, Mail, Phone, Linkedin, Download, ChevronDown, ChevronUp, Copy, AlertTriangle, Search, Sparkles, Network, FileSearch, GraduationCap, Trash2 } from "lucide-react";
 
 type PipelineStatus = "Ny" | "Intressant" | "Kontakta" | "Avvakta" | "Ej relevant" | "Skickad till Cinode";
 type FeedbackTag = "Relevant" | "Inte relevant" | "Fel bransch" | "För junior" | "Fel geografi" | "Saknar nyckelkompetens";
@@ -83,6 +83,7 @@ interface CandidateCardProps {
   onEnrich?: () => void;
   onSelectedChange?: (selected: boolean) => void;
   onSaveToDb?: () => void;
+  onDeleteFromDb?: () => void;
   hoveredSkill?: string | null;
   onOutreachClick?: (candidate: ScoredCandidate) => void;
 }
@@ -103,6 +104,7 @@ export function CandidateCard({
   onEnrich,
   onSelectedChange,
   onSaveToDb,
+  onDeleteFromDb,
   hoveredSkill = null,
   onOutreachClick,
 }: CandidateCardProps) {
@@ -421,6 +423,18 @@ export function CandidateCard({
                   {onSaveToDb && candidate.sourceCategory !== "Intern databas" && (
                     <Button type="button" variant="default" size="sm" onClick={onSaveToDb} className="h-9 gap-1 rounded-full bg-primary text-black hover:bg-primary/95 text-xs font-bold">
                       <Database className="h-3.5 w-3.5" /> Spara i databas
+                    </Button>
+                  )}
+                  {onDeleteFromDb && candidate.sourceCategory === "Intern databas" && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={onDeleteFromDb} 
+                      className="h-9 gap-1 rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 text-xs font-bold"
+                      title="Ta bort kandidaten från den interna databasen"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Ta bort från databas
                     </Button>
                   )}
                   <Button

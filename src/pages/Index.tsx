@@ -607,6 +607,7 @@ export default function Index() {
   const [hoveredRequirementSkill, setHoveredRequirementSkill] = useState<string | null>(null);
   const [showDatabaseOnly, setShowDatabaseOnly] = useState(false);
   const [databaseCandidates, setDatabaseCandidates] = useState<ScoredCandidate[]>([]);
+  const [matchingDbCount, setMatchingDbCount] = useState<number>(0);
   const [isLoadingDatabase, setIsLoadingDatabase] = useState(false);
 
   const fetchDatabaseCandidates = async (): Promise<ScoredCandidate[]> => {
@@ -1034,6 +1035,65 @@ export default function Index() {
     setWebResults(prev => prev.map(c => c.id === candidate.id ? { ...c, sourceCategory: "Intern databas" } : c));
   };
 
+  // Delete a candidate from Supabase DB + local fallback
+  const handleDeleteCandidateFromDb = async (candidate: ScoredCandidate) => {
+    const candidateId = candidate.id;
+    const candidateName = candidate.name;
+    const linkedinUrl = candidate.linkedin || candidate.linkedin_url || "";
+
+    // 1. Remove from local storage
+    const currentLocal = readLocalCandidates();
+    const updatedLocal = currentLocal.filter((c: any) => c.id !== candidateId && c.name !== candidateName);
+    saveLocalCandidates(updatedLocal);
+
+    // 2. Remove from Supabase DB
+    try {
+      if (candidateId && !candidateId.startsWith("pool-")) {
+        await supabase.from("candidates").delete().eq("id", candidateId);
+      }
+      if (candidateName) {
+        await supabase.from("candidates").delete().eq("name", candidateName);
+      }
+      if (linkedinUrl) {
+        await supabase.from("candidates").delete().eq("linkedin_url", linkedinUrl);
+      }
+    } catch (err) {
+      console.warn("Could not delete from Supabase:", err);
+    }
+
+    // 3. Update active state
+    setDatabaseCandidates(prev => prev.filter(c => c.id !== candidateId && c.name !== candidateName));
+    setWebResults(prev => prev.map(c => (c.id === candidateId || c.name === candidateName) ? { ...c, sourceCategory: "LinkedIn" as any } : c));
+    setShortlist(prev => prev.filter(c => c.id !== candidateId && c.name !== candidateName));
+
+    toast({
+      title: "Kandidat borttagen",
+      description: `${candidateName} har tagits bort från den interna databasen.`,
+    });
+  };
+
+  // Clear all saved candidates from internal database
+  const handleClearDatabase = async () => {
+    if (!window.confirm("Är du säker på att du vill rensa alla sparade kandidater i den interna databasen?")) {
+      return;
+    }
+
+    try {
+      // Delete all candidates from Supabase
+      await supabase.from("candidates").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    } catch (e) {
+      console.warn("Could not clear remote database:", e);
+    }
+
+    // Clear local storage and state
+    localStorage.removeItem("nektab-local-candidates");
+    setDatabaseCandidates([]);
+    toast({
+      title: "Databasen rensad",
+      description: "Alla sparade testkandidater har raderats från den interna databasen.",
+    });
+  };
+
   // Zero-API-Cost combined local + client-side web search
   const searchRealCandidates = async (reqs: JobRequirements) => {
     setIsSearchingWeb(true);
@@ -1116,13 +1176,17 @@ export default function Index() {
 
       setSearchError(null);
 
-      // Merge local and web results
-      const combinedCandidates = [...candidates, ...webCandidates];
-
-      // Rank matching candidates relative to job requirements in browser
-      const scored = rankCandidates(combinedCandidates, reqs);
+      // 1. Web results strictly show candidates found for this specific search/ad
+      const scored = rankCandidates(webCandidates, reqs);
       setWebResults(scored);
       setShowShortlistOnly(false);
+      setShowDatabaseOnly(false);
+
+      // 2. Also rank internal database candidates against these requirements so they are ready for the database view
+      const scoredDb = rankCandidates(candidates, reqs);
+      setDatabaseCandidates(scoredDb);
+      const matchingDb = scoredDb.filter(c => c.matchedSkills.length > 0 && c.score >= 50);
+      setMatchingDbCount(matchingDb.length);
 
       // Save search history
       const title = searchTitleFromText(jobDescription || quickProfile);
@@ -1859,8 +1923,13 @@ ${recruiterName || "NEKTAB"}`;
             <UserProfileDropdown
               session={session}
               onSignOut={handleSignOut}
-              onShowSaved={() => {
+              onShowSaved={async () => {
+                setIsLoadingDatabase(true);
+                const cands = await fetchDatabaseCandidates();
+                setDatabaseCandidates(cands);
                 setShowDatabaseOnly(true);
+                setShowShortlistOnly(false);
+                setIsLoadingDatabase(false);
                 // Scroll down to the results area where candidates are displayed
                 const resultsSection = document.getElementById("search-results-section");
                 if (resultsSection) {
@@ -2200,6 +2269,19 @@ ${recruiterName || "NEKTAB"}`;
                       )}
                       {showDatabaseOnly ? "Visa sökresultat" : "Visa intern databas"}
                     </Button>
+                    {showDatabaseOnly && databaseCandidates.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleClearDatabase}
+                        className="rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold normal-case h-9 gap-1.5"
+                        title="Rensa sparade testkandidater från databasen"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Rensa sparade
+                      </Button>
+                    )}
                     {shortlist.length > 0 && (
                       <Button
                         type="button"
@@ -2273,6 +2355,24 @@ ${recruiterName || "NEKTAB"}`;
                     )}
                   </div>
                 </div>
+
+                {!showDatabaseOnly && !showShortlistOnly && matchingDbCount > 0 && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-primary/10 border border-primary/30 p-3 text-xs text-foreground animate-fade-in shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Database className="h-4 w-4 text-primary shrink-0" />
+                      <span>Det finns även <strong>{matchingDbCount}</strong> sparad(e) kandidat(er) i er interna databas som matchar denna roll.</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={handleToggleDatabase}
+                      className="text-primary font-bold hover:underline p-0 h-auto text-xs self-start sm:self-auto"
+                    >
+                      Visa sparade i databasen →
+                    </Button>
+                  </div>
+                )}
 
                 {searchError && (
                   <div className="border-l-4 border-amber-500 bg-amber-50/70 p-4 text-sm text-foreground shadow-sm space-y-3 animate-fade-in">
@@ -2407,6 +2507,7 @@ ${recruiterName || "NEKTAB"}`;
                         onEnrich={() => handleEnrich(candidate)}
                         onSelectedChange={(selected) => handleCandidateSelection(candidateId(candidate), selected)}
                         onSaveToDb={() => saveWebCandidateToDb(candidate)}
+                        onDeleteFromDb={() => handleDeleteCandidateFromDb(candidate)}
                         hoveredSkill={hoveredRequirementSkill}
                         onOutreachClick={(c) => setOutreachCandidate(c)}
                       />
