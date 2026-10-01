@@ -183,7 +183,17 @@ export function CandidateCard({
                 {/* Role and Company */}
                 <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground/80 mt-0.5">
                   <Briefcase className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="break-words">{candidate.currentRole} på {candidate.company}</span>
+                  <span className="break-words">
+                    {candidate.currentRole}
+                    {candidate.company && 
+                     !["linkedin-verifierad", "okänt bolag", "linkedin", "intern databas"].includes(candidate.company.trim().toLowerCase()) &&
+                     !candidate.currentRole.toLowerCase().includes(candidate.company.toLowerCase()) && (
+                      <>
+                        <span className="text-muted-foreground font-normal"> på </span>
+                        <span className="font-semibold text-foreground">{candidate.company}</span>
+                      </>
+                    )}
+                  </span>
                 </p>
 
                 {/* Education */}

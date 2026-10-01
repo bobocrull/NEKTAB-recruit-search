@@ -112,25 +112,26 @@ function extractEducationFromText(summary: string, role: string, company: string
   const combined = `${summary} ${role} ${company}`;
   if (!combined.trim()) return "";
   
-  const eduKeywords = /(kth|royal institute of technology|chalmers|liu|linköpings universitet|luleå tekniska universitet|ltu|uppsala universitet|lunds universitet|lth|göteborgs universitet|karlstads universitet|mälardalens universitet|mdu|högskolan i [a-zåäö]+|yh-utbildning|nackademin|jensen|yrkeshögskola|alumni)/i;
-  const degreeKeywords = /(civilingenjör|högskoleingenjör|master of science|m\.sc|b\.sc|kandidatexamen|masterexamen|elkraftsingenjör|elkraftsingenjörsutbildning|beredareutbildning|energiingenjör)/i;
+  // Strict university keywords with word boundaries
+  const eduKeywords = /\b(kth|royal institute of technology|chalmers|liu|linköpings universitet|luleå tekniska universitet|ltu|uppsala universitet|lunds universitet|lth|göteborgs universitet|karlstads universitet|mälardalens universitet|mdu|slu|sveriges lantbruksuniversitet|högskolan i [a-zåäö]+|högskolan väst|skinnskatteberg|gammelkroppa|nackademin|jensen|yrkeshögskola)\b/i;
+  const degreeKeywords = /\b(civilingenjör|högskoleingenjör|master of science|m\.sc|b\.sc|kandidatexamen|masterexamen|jägmästare|skogsmästare|skogstekniker|elkraftsingenjör|elkraftsingenjörsutbildning|beredareutbildning|energiingenjör)\b/i;
 
-  const sentences = combined.split(/[.!?\n]|\s{2,}/);
-  let bestMatch = "";
-  
-  for (const sentence of sentences) {
-    const s = sentence.trim();
-    if (!s) continue;
-    
-    if (eduKeywords.test(s) && degreeKeywords.test(s)) {
-      return s;
-    }
-    if (!bestMatch && (eduKeywords.test(s) || degreeKeywords.test(s))) {
-      bestMatch = s;
-    }
+  const eduMatch = combined.match(eduKeywords);
+  const degreeMatch = combined.match(degreeKeywords);
+
+  if (degreeMatch && eduMatch) {
+    const deg = degreeMatch[0].charAt(0).toUpperCase() + degreeMatch[0].slice(1);
+    const uni = eduMatch[0].toUpperCase() === eduMatch[0] ? eduMatch[0] : (eduMatch[0].charAt(0).toUpperCase() + eduMatch[0].slice(1));
+    return `${deg}, ${uni}`;
+  }
+  if (degreeMatch) {
+    return degreeMatch[0].charAt(0).toUpperCase() + degreeMatch[0].slice(1);
+  }
+  if (eduMatch) {
+    return eduMatch[0].length <= 4 ? eduMatch[0].toUpperCase() : (eduMatch[0].charAt(0).toUpperCase() + eduMatch[0].slice(1));
   }
   
-  return bestMatch;
+  return "";
 }
 
 function readLocalShortlist(): ScoredCandidate[] {
@@ -245,27 +246,9 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
     else yearsOfExperience = 3;
   }
 
-  // 3. Dynamic Title Extraction (Contextual NLP patterns + dictionary)
-  let extractedTitle = "";
-  const titlePatterns = [
-    /(?:som|rollen som|tjänsten som|arbetet som|jobbet som)\s+([a-zåäö\s-]{3,35}?)(?:\s+(?:är|innebär|arbetar|ska|hos|till|på|där|,|\.))/i,
-    /(?:vi söker|söker vi|vill du bli)\s+(?:en|ett|vår nästa|vår nya)?\s*([a-zåäö\s-]{3,35}?)(?:\s+(?:som|till|hos|med|\.|\n))/i,
-    /(?:titel|befattning|yrkesroll|roll):\s*([^\n\r]+)/i
-  ];
-
-  for (const pattern of titlePatterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      const candidate = match[1].trim();
-      if (!/^(en|ett|dig|oss|vår|våra|del|team|person|medarbetare|kandidat)$/i.test(candidate) && candidate.length > 3) {
-        extractedTitle = candidate.charAt(0).toUpperCase() + candidate.slice(1);
-        break;
-      }
-    }
-  }
-
+  // 3. Dynamic Title Extraction (Known dictionary first + contextual NLP)
   const KNOWN_TITLES = [
-    "Skoglig rådgivare", "Skogsinspektor", "Virkesköpare", "Skogsrådgivare",
+    "Skoglig rådgivare", "Skogsinspektor", "Virkesköpare", "Skogsrådgivare", "Skogsmästare", "Jägmästare",
     "Mark- och tillståndshandläggare", "Tillståndshandläggare", "Markförhandlare", "Tillståndsspecialist", "Markåtkomsthandläggare",
     "Stationsprojektör", "Stationskonstruktör", "Ställverkskonstruktör", "Transformatorstationer",
     "Kraftledningsprojektör", "Luftledningsprojektör", "Linjeprojektör", "Kabelprojektör",
@@ -277,10 +260,8 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
   ];
 
   const jobTitles: string[] = [];
-  if (extractedTitle) {
-    jobTitles.push(extractedTitle);
-  }
 
+  // Step 3A: Always prioritize known professional titles appearing in the text
   for (const title of KNOWN_TITLES) {
     const regex = new RegExp(`\\b${title.toLowerCase()}\\b`, 'i');
     if (regex.test(lowerText) && !jobTitles.includes(title)) {
@@ -288,15 +269,41 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
     }
   }
 
+  // Step 3B: If no known titles found, use strict NLP patterns with negative validation
+  if (jobTitles.length === 0) {
+    const titlePatterns = [
+      /(?:titel|befattning|yrkesroll|roll):\s*([^\n\r,.;]+)/i,
+      /(?:rollen som|tjänsten som|arbetet som|jobbet som|befattningen som|anställning som)\s+([a-zåäö\s-]{3,35}?)(?:\s+(?:är|innebär|omfattar|ska|hos|till|där|\.|\n))/i,
+      /(?:vi söker|söker vi)\s+(?:en|ett|vår nästa|vår nya)?\s*([a-zåäö\s-]{3,35}?)(?:\s+(?:som|till|med|\.|\n))/i
+    ];
+
+    const invalidWordsRegex = /\b(har|ser|vill|ska|kan|är|blir|som|och|för|med|vår|vårt|våra|ett|en|tydlig|helhetssyn|god|bra|fokus|erfarenhet|krav|intresse|utbildning|person|dig|oss|medarbetare|kandidat|förmåga|kompetent|partner|ambassadör)\b/i;
+
+    for (const pattern of titlePatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        const candidate = match[1].trim();
+        const wordCount = candidate.split(/\s+/).length;
+        if (candidate.length > 3 && wordCount <= 4 && !invalidWordsRegex.test(candidate)) {
+          jobTitles.push(candidate.charAt(0).toUpperCase() + candidate.slice(1));
+          break;
+        }
+      }
+    }
+  }
+
+  // Step 3C: Check clean headline first line if still empty
   if (jobTitles.length === 0) {
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     if (lines.length > 0) {
       const firstLine = lines[0].replace(/^Titel:\s*/i, "").replace(/^Annonstext:\s*/i, "").trim();
-      if (firstLine.length > 3 && firstLine.length <= 50 && !/[.!?]$/.test(firstLine)) {
+      const wordCount = firstLine.split(/\s+/).length;
+      if (firstLine.length > 3 && firstLine.length <= 40 && wordCount <= 4 && !/[.!?]$/.test(firstLine) && !/\b(har|ser|vill|ska|kan|är)\b/i.test(firstLine)) {
         jobTitles.push(firstLine.charAt(0).toUpperCase() + firstLine.slice(1));
       }
     }
   }
+
   if (jobTitles.length === 0) {
     jobTitles.push("Rådgivare / Projektör");
   }

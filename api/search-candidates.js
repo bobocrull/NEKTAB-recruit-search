@@ -628,11 +628,11 @@ export default async function handler(req, res) {
                 .replace(/\s*–\s*LinkedIn.*$/i, "");
               const parts = cleanTitle.split(/\s+[-–|]\s+/);
               const name = parts[0]?.trim() || "LinkedIn-kandidat";
-              let role = parts[1]?.trim() || jobTitle;
-              let company = parts[2]?.trim();
+              let role = parts[1]?.trim() || "";
+              let company = parts[2]?.trim() || "";
 
               // Parse out company if embedded in role string (e.g. "Skoglig rådgivare på Mellanskog")
-              if (!company) {
+              if (role && !company) {
                 const atMatch = role.match(/^(.*?)\s+(?:på|at|hos)\s+(.*?)$/i);
                 if (atMatch) {
                   role = atMatch[1].trim();
@@ -645,11 +645,44 @@ export default async function handler(req, res) {
                   }
                 }
               }
-              if (!company || company.toLowerCase() === "linkedin") {
-                company = targetCompany || reqs.targetCompanies?.[0] || "LinkedIn-verifierad";
-              }
 
               const contentText = r.content || "";
+
+              // If role or company missing from title, extract from Tavily content snippet
+              if (!role || !company) {
+                const lines = contentText.split('\n').map(l => l.trim()).filter(Boolean);
+                if (lines.length > 1) {
+                  const candidateLines = lines.slice(1, 4);
+                  for (const l of candidateLines) {
+                    if (/^(##|connections?|followers?|view post|activity)/i.test(l)) continue;
+                    if (/(sweden|sverige|county|län|stad|kommun)/i.test(l)) continue;
+
+                    const atMatch = l.match(/^(.*?)\s+(?:på|at|hos)\s+(.*?)$/i);
+                    if (atMatch) {
+                      if (!role) role = atMatch[1].trim();
+                      if (!company) company = atMatch[2].trim();
+                      break;
+                    }
+
+                    if (!company && (/\b(ab|as|oy|energi|kraft|konsult|skogs|skogen|elnät|group|sweden)\b/i.test(l) || (l.length < 35 && !/[.!?]$/.test(l)))) {
+                      company = l;
+                    } else if (!role && l.length < 40 && !/[.!?]$/.test(l) && !/\b(har|ser|vill|ska|kan|är)\b/i.test(l)) {
+                      role = l;
+                    }
+                  }
+                }
+              }
+
+              // Fallback for role (ensuring it's not a sentence)
+              const cleanFallbackRole = (jobTitle && !/\b(har|ser|vill|ska|kan|är|vi)\b/i.test(jobTitle)) ? jobTitle : "Kandidat";
+              if (!role || /\b(har|ser|vill|ska|kan|är)\b/i.test(role)) {
+                role = cleanFallbackRole;
+              }
+
+              // Fallback for company: NEVER use "LinkedIn-verifierad" as company name
+              if (!company || company.toLowerCase() === "linkedin" || company.toLowerCase() === "linkedin-verifierad") {
+                company = targetCompany || reqs.targetCompanies?.[0] || "";
+              }
               
               // Extract city / geografi from content
               let candLocation = reqs.location || "Sverige";
@@ -669,11 +702,17 @@ export default async function handler(req, res) {
                 ...(reqs.keySkills || []).slice(0, 4)
               ])).filter(Boolean);
 
-              // Extract education from text if available
+              // Extract exact education cleanly from ## Education or word-bounded regex
               let candidateEducation = "";
-              const eduMatch = contentText.match(/(?:utbildning|studerat|alumni|examen|universitet|högskola|kth|chalmers|slu|lth|ltu)[\s\S]{0,100}/i);
-              if (eduMatch) {
-                candidateEducation = eduMatch[0].split('\n')[0].replace(/^#+\s*/, '').trim();
+              const eduSection = contentText.match(/## Education\s*\n+###?\s*([^\n\r]+)/i);
+              if (eduSection && eduSection[1] && !/^n\/?a$/i.test(eduSection[1].trim())) {
+                candidateEducation = eduSection[1].trim();
+              } else {
+                const eduUniMatch = contentText.match(/\b(kth|royal institute of technology|chalmers|liu|linköpings universitet|luleå tekniska universitet|ltu|uppsala universitet|lunds universitet|lth|göteborgs universitet|karlstads universitet|mälardalens universitet|mdu|slu|sveriges lantbruksuniversitet|högskolan i [a-zåäö]+|högskolan väst|skinnskatteberg|gammelkroppa|nackademin|jensen|yrkeshögskola)\b/i);
+                if (eduUniMatch) {
+                  const u = eduUniMatch[0];
+                  candidateEducation = u.length <= 4 ? u.toUpperCase() : (u.charAt(0).toUpperCase() + u.slice(1));
+                }
               }
 
               return {
@@ -681,7 +720,7 @@ export default async function handler(req, res) {
                 name,
                 currentRole: role,
                 current_role: role,
-                company,
+                company: company || (targetCompany || "LinkedIn"),
                 yearsOfExperience: reqs.yearsOfExperience || 4,
                 years_of_experience: reqs.yearsOfExperience || 4,
                 skills: candidateSkills,
