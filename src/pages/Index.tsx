@@ -602,7 +602,7 @@ export default function Index() {
   const { toast } = useToast();
 
   const [recruiterName, setRecruiterName] = useState(localStorage.getItem("nektab-recruiter-name") || "");
-  const [tavilyApiKey, setTavilyApiKey] = useState(() => localStorage.getItem("nektab-tavily-api-key") || "");
+  const [tavilyApiKey, setTavilyApiKey] = useState(() => localStorage.getItem("nektab-tavily-api-key") || (import.meta as any).env?.VITE_TAVILY_API_KEY || "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");
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [hoveredRequirementSkill, setHoveredRequirementSkill] = useState<string | null>(null);
   const [showDatabaseOnly, setShowDatabaseOnly] = useState(false);
