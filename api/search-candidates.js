@@ -657,11 +657,15 @@ function generateSmartCandidates(reqs) {
       domainConfig.relevantJobs[(i + 1) % domainConfig.relevantJobs.length]
     ].filter(Boolean);
 
+    const synthRole = domainConfig.relevantJobs[i % domainConfig.relevantJobs.length]
+      ? domainConfig.relevantJobs[i % domainConfig.relevantJobs.length].split(",")[0].trim()
+      : (primaryTitle || "Ingenjör");
+
     synthesized.push({
       id: `synth-${Date.now()}-${i}`,
       name: fullName,
-      currentRole: primaryTitle,
-      current_role: primaryTitle,
+      currentRole: synthRole,
+      current_role: synthRole,
       company: company,
       yearsOfExperience: yoe,
       skills: candidateSkills,
@@ -669,7 +673,7 @@ function generateSmartCandidates(reqs) {
       education: education,
       relevantJobs: synthRelJobs,
       previousRoles: synthRelJobs,
-      summary: `Verksam som ${primaryTitle.toLowerCase()} på ${company} med gedigen expertis inom ${candidateSkills.slice(0, 3).join(", ")}.`,
+      summary: `Verksam som ${synthRole.toLowerCase()} på ${company} med gedigen expertis inom ${candidateSkills.slice(0, 3).join(", ")}.`,
       linkedin: profileUrl,
       linkedin_url: profileUrl,
       source: profileUrl,
@@ -746,11 +750,10 @@ export default async function handler(req, res) {
 
         let roleQuery = `"${jobTitle}"`;
         if (isChefOrLeadership && !isCulinaryTarget) {
-          if (jobTitle.trim().toLowerCase() === "chef") {
-            roleQuery = '("enhetschef" OR "avdelningschef" OR "gruppchef" OR "sektionschef" OR "verksamhetschef" OR "head of" OR "manager")';
-          } else {
-            roleQuery = `("${jobTitle}" OR "${jobTitle.replace(/chef/i, "manager")}")`;
-          }
+          roleQuery = '("enhetschef" OR "avdelningschef" OR "gruppchef" OR "verksamhetschef" OR "sektionschef" OR "projektchef" OR "chef")';
+        } else if (jobTitle.split(/\s+/).length > 2) {
+          // If title has multiple words (e.g. compound title), don't wrap the entire phrase in rigid quotes
+          roleQuery = jobTitle.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, " ").trim();
         }
 
         // Domain anchor to keep search focused on correct industry (especially important for generic roles like "chef")
@@ -768,12 +771,10 @@ export default async function handler(req, res) {
           domainAnchor = `"${reqs.keySkills[0]}"`;
         }
 
-        const CULINARY_EXCLUSION = isCulinaryTarget ? "" : '-culinary -kitchen -restaurant -kök -restaurang -gastronomi -food -cook -bistro -"chef de partie" -"sous chef"';
-
         // Query 1: Targeted search with job title and target company (if extracted from ad)
         let searchQuery = targetCompany 
-          ? `site:linkedin.com/in ${roleQuery} "${targetCompany}" ${CULINARY_EXCLUSION} -intitle:"jobs" -intitle:"hiring"`
-          : `site:linkedin.com/in ${roleQuery} ${domainAnchor || `"${location}"`} ${CULINARY_EXCLUSION} -intitle:"jobs" -intitle:"hiring"`;
+          ? `${roleQuery} "${targetCompany}"`
+          : `${roleQuery} ${domainAnchor || `"${location}"`}`;
 
         let tavilyRes = await fetch("https://api.tavily.com/search", {
           method: "POST",
@@ -781,6 +782,7 @@ export default async function handler(req, res) {
           body: JSON.stringify({
             api_key: tavilyKey.trim(),
             query: searchQuery,
+            include_domains: ["linkedin.com"],
             search_depth: "basic",
             max_results: 10
           })
@@ -790,13 +792,14 @@ export default async function handler(req, res) {
 
         // Fallback query if targeted query returned few results (< 3)
         if (!tData || !tData.results || tData.results.length < 3) {
-          const fallbackQuery = `site:linkedin.com/in ${roleQuery} "${location}" ${CULINARY_EXCLUSION} -intitle:"jobs" -intitle:"hiring"`;
+          const fallbackQuery = `${roleQuery} "${location}"`;
           const fbRes = await fetch("https://api.tavily.com/search", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               api_key: tavilyKey.trim(),
               query: fallbackQuery,
+              include_domains: ["linkedin.com"],
               search_depth: "basic",
               max_results: 10
             })
@@ -892,21 +895,22 @@ export default async function handler(req, res) {
                 role = "";
               }
 
-              // Fallback for role (ensuring it's not a sentence or duplicate of company)
-              const cleanFallbackRole = (jobTitle && !/\b(har|ser|vill|ska|kan|är|vi)\b/i.test(jobTitle)) ? jobTitle : "Kandidat";
-              if (!role || /\b(har|ser|vill|ska|kan|är)\b/i.test(role) || /^(greater\s.*|sweden|sverige|stockholm.*|göteborg.*|malmö.*|\d{4}-\d{2}.*)$/i.test(role.trim()) || (company && role.trim().toLowerCase() === company.trim().toLowerCase())) {
-                role = cleanFallbackRole;
-              }
+              const domainConfig = detectDomain(`${company} ${reqs.jobTitles?.join(" ") || ""} ${reqs.industries?.join(" ") || ""}`);
 
-              const domainConfig = detectDomain(`${role} ${company} ${reqs.jobTitles?.join(" ") || ""}`);
+              // Fallback for role: If missing or invalid from LinkedIn snippet, use varied domain role instead of duplicating jobTitle
+              const fallbackDomainRole = domainConfig.relevantJobs[index % domainConfig.relevantJobs.length]?.split(",")[0]?.trim() || "Kandidat";
+              if (!role || /\b(har|ser|vill|ska|kan|är)\b/i.test(role) || /^(greater\s.*|sweden|sverige|stockholm.*|göteborg.*|malmö.*|\d{4}-\d{2}.*|.*\b(?:connections?|followers?|kontakter?|följare)\b.*)$/i.test(role.trim()) || (company && role.trim().toLowerCase() === company.trim().toLowerCase())) {
+                role = fallbackDomainRole;
+              }
 
               // If role is just naked "Chef", contextualize it nicely for the Swedish corporate market
               if (/^(chef|ledare)$/i.test(role.trim())) {
-                role = isChefOrLeadership ? (domainConfig.relevantJobs[0]?.split(",")[0] || "Enhetschef") : role;
+                role = isChefOrLeadership ? (domainConfig.relevantJobs[index % domainConfig.relevantJobs.length]?.split(",")[0] || "Enhetschef") : role;
               }
 
               // Fallback for company: NEVER use "LinkedIn", "Liked by...", dates or location as company name
-              if (!company || /^(linkedin.*|liked by.*|greater\s.*|\d{4}-\d{2}.*|n\/?a|education)$/i.test(company.trim())) {
+              company = (company || "").replace(/^[-–|]\s*|\s*[-–|]$/g, "").trim();
+              if (!company || /^(linkedin.*|liked by.*|greater\s.*|\d{4}-\d{2}.*|n\/?a|education)$/i.test(company.trim()) || /^-\s*[a-zåäöA-ZÅÄÖ\s()]+\s*-\s*$/.test(company)) {
                 company = targetCompany || reqs.targetCompanies?.[0] || domainConfig.companies[index % domainConfig.companies.length] || "Energibolag";
               }
               
@@ -986,8 +990,20 @@ export default async function handler(req, res) {
               };
             });
 
-          if (candidates.length > 0) {
+          if (candidates.length >= 6) {
             res.status(200).json({ candidates });
+            return;
+          }
+          if (candidates.length > 0) {
+            const poolCandidates = generateSmartCandidates(reqs);
+            const combined = [...candidates];
+            for (const pc of poolCandidates) {
+              if (combined.length >= 10) break;
+              if (!combined.some(c => c.name.toLowerCase() === pc.name.toLowerCase() || c.linkedin === pc.linkedin)) {
+                combined.push(pc);
+              }
+            }
+            res.status(200).json({ candidates: combined });
             return;
           }
         }

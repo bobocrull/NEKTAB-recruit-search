@@ -309,24 +309,6 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
     jobTitles.push("Rådgivare / Projektör");
   }
 
-  // Step 3D: Contextualize generic "Chef" / "Ledare" to prevent false friend kitchen cook matching
-  for (let i = 0; i < jobTitles.length; i++) {
-    const jt = jobTitles[i].trim();
-    if (/^(?:chef|ledare)$/i.test(jt)) {
-      if (/skog|virke/i.test(lowerText)) {
-        jobTitles[i] = "Områdeschef Skog";
-      } else if (/mark|tillstånd|fastighet/i.test(lowerText)) {
-        jobTitles[i] = "Gruppchef Mark och Tillstånd";
-      } else if (/station|ställverk/i.test(lowerText)) {
-        jobTitles[i] = "Avdelningschef Stationer & Elkraft";
-      } else if (/elnät|elkraft|energi|kraftledning|distribution/i.test(lowerText)) {
-        jobTitles[i] = "Enhetschef / Gruppchef Elnät";
-      } else {
-        jobTitles[i] = "Enhetschef / Verksamhetschef";
-      }
-    }
-  }
-
   // 4. Extensive Multi-Domain Skills Dictionary & Pattern Extraction
   const EXTENSIVE_SKILLS = [
     // Skog & Rådgivning
@@ -1053,8 +1035,8 @@ export default function Index() {
           return data.candidates.map((c: any) => ({
             id: c.id,
             name: c.name,
-            currentRole: c.currentRole || c.current_role || reqs.jobTitles?.[0] || "Kandidat",
-            current_role: c.currentRole || c.current_role || reqs.jobTitles?.[0] || "Kandidat",
+            currentRole: c.currentRole || c.current_role || "Kandidat",
+            current_role: c.currentRole || c.current_role || "Kandidat",
             company: c.company || "Okänt bolag",
             yearsOfExperience: Number(c.yearsOfExperience || c.years_of_experience || 3),
             years_of_experience: Number(c.yearsOfExperience || c.years_of_experience || 3),

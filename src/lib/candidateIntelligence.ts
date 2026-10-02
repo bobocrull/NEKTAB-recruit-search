@@ -982,9 +982,9 @@ export function generateSmartCandidates(reqs: JobRequirements): Candidate[] {
       domainConfig.relevantJobs[(i + 1) % domainConfig.relevantJobs.length]
     ].filter(Boolean);
 
-    const synthRole = /^(?:chef|ledare)$/i.test(primaryTitle.trim())
-      ? (allQueryText.includes("skog") ? "Områdeschef Skog" : allQueryText.includes("mark") ? "Gruppchef Mark & Tillstånd" : "Enhetschef Elnät")
-      : primaryTitle;
+    const synthRole = domainConfig.relevantJobs[i % domainConfig.relevantJobs.length]
+      ? domainConfig.relevantJobs[i % domainConfig.relevantJobs.length].split(",")[0].trim()
+      : (primaryTitle || "Ingenjör");
 
     synthesized.push({
       id: `synth-${Date.now()}-${i}`,
