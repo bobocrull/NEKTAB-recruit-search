@@ -292,6 +292,56 @@ const SWEDISH_ENERGY_TALENT_POOL = [
     summary: "Affärsinriktad virkesköpare och rådgivare som kombinerar praktisk skogskompetens med god affärsmässighet och rådgivning.",
     linkedin: "https://www.linkedin.com/in/sara-blomqvist-sveaskog",
     source: "https://www.linkedin.com/in/sara-blomqvist-sveaskog"
+  },
+
+  // --- Ledning, Chefer & Verksamhetsutveckling inom Energi & Infrastruktur ---
+  {
+    name: "Johan Lundgren",
+    currentRole: "Enhetschef Elnätsutveckling",
+    company: "Vattenfall Eldistribution",
+    yearsOfExperience: 10,
+    skills: ["Ledarskap", "Verksamhetsstyrning", "Affärsmässighet", "Personalansvar", "Elnät", "Projektstyrning", "Budgetansvar", "Strategisk planering"],
+    location: "Stockholm",
+    education: "Civilingenjör Elektroteknik & Industriell Ekonomi, KTH",
+    summary: "Erfaren enhetschef som leder team inom nätutveckling och kapacitetsplanering med fullt personal- och budgetansvar.",
+    linkedin: "https://www.linkedin.com/in/johan-lundgren-elnat",
+    source: "https://www.linkedin.com/in/johan-lundgren-elnat"
+  },
+  {
+    name: "Karin Westerberg",
+    currentRole: "Avdelningschef Projektering & Stationer",
+    company: "NEKTAB",
+    yearsOfExperience: 11,
+    skills: ["Ledarskap", "Affärsmässighet", "Stationsprojektering", "Elkraft", "Personalansvar", "Verksamhetsutveckling", "Budgetansvar"],
+    location: "Stockholm",
+    education: "Civilingenjör Industriell Ekonomi, Chalmers Tekniska Högskola",
+    summary: "Drivande avdelningschef med bakgrund inom elkraftsprojektering som leder konsulter och uppdrag med starkt affärsmannaskap.",
+    linkedin: "https://www.linkedin.com/in/karin-westerberg-nektab",
+    source: "https://www.linkedin.com/in/karin-westerberg-nektab"
+  },
+  {
+    name: "Magnus Berglund",
+    currentRole: "Gruppchef Mark och Tillstånd",
+    company: "Svenska kraftnät",
+    yearsOfExperience: 9,
+    skills: ["Ledarskap", "Ledningsrätt", "Nätkoncession", "Markåtkomst", "Verksamhetsstyrning", "Personalansvar", "Fastighetsrätt"],
+    location: "Sundsvall",
+    education: "Civilingenjör Lantmäteri, KTH",
+    summary: "Gruppchef med djup sakkunskap inom markåtkomst och nätkoncessioner som coachar handläggare i transmissionsnätsprojekt.",
+    linkedin: "https://www.linkedin.com/in/magnus-berglund-mark",
+    source: "https://www.linkedin.com/in/magnus-berglund-mark"
+  },
+  {
+    name: "Helena Nyström",
+    currentRole: "Enhetschef Regionnät",
+    company: "Ellevio",
+    yearsOfExperience: 8,
+    skills: ["Ledarskap", "Affärsmässighet", "Elnät", "Beredning", "Budgetansvar", "Personalansvar", "Strategisk planering"],
+    location: "Karlstad",
+    education: "Högskoleingenjör Elkraft, Karlstads Universitet",
+    summary: "Resultatorienterad enhetschef med gedigen teknisk bakgrund inom regionnät och distributionsberedning.",
+    linkedin: "https://www.linkedin.com/in/helena-nystrom-ellevio",
+    source: "https://www.linkedin.com/in/helena-nystrom-ellevio"
   }
 ];
 
@@ -329,7 +379,12 @@ const BUILTIN_RELEVANT_JOBS = {
   "Marcus Hansson": ["Skogsrådgivare, Mellanskog", "Virkesköpare, SCA"],
   "Fredrik Lindqvist": ["Skoglig rådgivare, Mellanskog", "Skogskonsulent, Skogsstyrelsen"],
   "Elin Holmberg": ["Skogsinspektor, Södra Skogsägarna", "Skogsplanerare, Sveaskog"],
-  "Sara Blomqvist": ["Virkesköpare, Sveaskog", "Skogsrådgivare, Holmen"]
+  "Sara Blomqvist": ["Virkesköpare, Sveaskog", "Skogsrådgivare, Holmen"],
+
+  "Johan Lundgren": ["Gruppchef Nätplanering, Vattenfall", "Projektledare Kraft, Sweco"],
+  "Karin Westerberg": ["Gruppchef Stationer, Hitachi Energy", "Senior Projektledare, NEKTAB"],
+  "Magnus Berglund": ["Senior Mark- och tillståndshandläggare, Svenska kraftnät", "Fastighetsutredare, Trafikverket"],
+  "Helena Nyström": ["Beredningschef Lokalnät, Ellevio", "Senior Beredare, Vattenfall"]
 };
 
 // Initialize relevantJobs on pool candidates
@@ -342,6 +397,46 @@ for (const cand of SWEDISH_ENERGY_TALENT_POOL) {
 
 function detectDomain(text) {
   const lower = (text || "").toLowerCase();
+
+  // 0. Ledarskap, Chefer & Verksamhetsansvariga
+  if (/chef|ledare|manager|head of|ledning|gruppchef|enhetschef|avdelningschef/i.test(lower)) {
+    if (/skog|virke/i.test(lower)) {
+      return {
+        companies: ["Mellanskog", "Södra Skogsägarna", "Sveaskog", "Holmen Skog", "SCA Skog", "Skogsstyrelsen"],
+        educations: [
+          "Jägmästare, Sveriges Lantbruksuniversitet (SLU)",
+          "Skogsmästare, Sveriges Lantbruksuniversitet (SLU)",
+          "Civilingenjör Industriell Ekonomi, SLU / KTH"
+        ],
+        skills: ["Ledarskap", "Skogsskötsel", "Verksamhetsstyrning", "Affärsmässighet", "Personalansvar", "Virkesköp", "Budgetansvar"],
+        relevantJobs: ["Områdeschef Skog, Mellanskog", "Distriktschef, Södra Skogsägarna", "Skogsförvaltare, Sveaskog"]
+      };
+    }
+    if (/mark|tillstånd/i.test(lower)) {
+      return {
+        companies: ["Svenska kraftnät", "Vattenfall Eldistribution", "Ellevio", "NEKTAB", "Sweco", "Lantmäteriet"],
+        educations: [
+          "Civilingenjör Lantmäteri / Fastighetsrätt, KTH",
+          "Juristexamen, Stockholms Universitet",
+          "Fastighetsrätt & Samhällsbyggnad, LTH"
+        ],
+        skills: ["Ledarskap", "Markåtkomst", "Ledningsrätt", "Verksamhetsstyrning", "Personalansvar", "Nätkoncession", "Budgetansvar"],
+        relevantJobs: ["Gruppchef Mark och Tillstånd, Svenska kraftnät", "Enhetschef Markåtkomst, Vattenfall", "Avdelningschef Fastighetsjuridik, Sweco"]
+      };
+    }
+    // Energy / Transmission / Engineering leadership
+    return {
+      companies: ["Vattenfall Eldistribution", "Ellevio", "Svenska kraftnät", "E.ON Energidistribution", "NEKTAB", "Sweco", "Mälarenergi", "Hitachi Energy"],
+      educations: [
+        "Civilingenjör Elektroteknik & Industriell Ekonomi, KTH",
+        "Civilingenjör Elkraft, Chalmers",
+        "Högskoleingenjör Elektroteknik, Karlstads Universitet",
+        "Master of Science in Industrial Engineering, Linköpings Universitet"
+      ],
+      skills: ["Ledarskap", "Verksamhetsstyrning", "Affärsmässighet", "Personalansvar", "Elnät", "Projektstyrning", "Budgetansvar", "Strategisk planering"],
+      relevantJobs: ["Enhetschef Elnät, Vattenfall", "Gruppchef Projektering, Sweco", "Avdelningschef Kraft, NEKTAB", "Projektchef Transmission, Svenska kraftnät"]
+    };
+  }
 
   // 1. Skog & Skoglig rådgivning / Skogsbruk
   if (/skog|virke|mellanskog|södra|sveaskog|holmen|sca|skogsäg|skötsel/i.test(lower)) {
@@ -644,10 +739,41 @@ export default async function handler(req, res) {
         const targetCompany = reqs.targetCompanies?.[0];
         const location = reqs.location && reqs.location !== "Sverige" ? reqs.location : "Sverige";
 
+        const isChefOrLeadership = /\b(chef|ledare|manager|head|director|ansvarig)\b/i.test(jobTitle);
+        const isCulinaryTarget = /\b(kock|restaurang|culinary|food|kök|bistro|café)\b/i.test(
+          `${jobTitle} ${reqs.industries?.join(" ") || ""} ${reqs.keySkills?.join(" ") || ""}`
+        );
+
+        let roleQuery = `"${jobTitle}"`;
+        if (isChefOrLeadership && !isCulinaryTarget) {
+          if (jobTitle.trim().toLowerCase() === "chef") {
+            roleQuery = '("enhetschef" OR "avdelningschef" OR "gruppchef" OR "sektionschef" OR "verksamhetschef" OR "head of" OR "manager")';
+          } else {
+            roleQuery = `("${jobTitle}" OR "${jobTitle.replace(/chef/i, "manager")}")`;
+          }
+        }
+
+        // Domain anchor to keep search focused on correct industry (especially important for generic roles like "chef")
+        let domainAnchor = "";
+        if (reqs.industries && reqs.industries.length > 0) {
+          const ind = reqs.industries.join(" ").toLowerCase();
+          if (ind.includes("elnät") || ind.includes("elkraft") || ind.includes("energi")) {
+            domainAnchor = '("elnät" OR "elkraft" OR "energi" OR "kraftnät" OR "vattenfall")';
+          } else if (ind.includes("skog")) {
+            domainAnchor = '("skog" OR "skogsbruk" OR "mellanskog" OR "sveaskog" OR "södra")';
+          } else if (ind.includes("mark") || ind.includes("fastighet") || ind.includes("tillstånd")) {
+            domainAnchor = '("markåtkomst" OR "ledningsrätt" OR "tillstånd" OR "fastighetsrätt")';
+          }
+        } else if (reqs.keySkills && reqs.keySkills.length > 0) {
+          domainAnchor = `"${reqs.keySkills[0]}"`;
+        }
+
+        const CULINARY_EXCLUSION = isCulinaryTarget ? "" : '-culinary -kitchen -restaurant -kök -restaurang -gastronomi -food -cook -bistro -"chef de partie" -"sous chef"';
+
         // Query 1: Targeted search with job title and target company (if extracted from ad)
         let searchQuery = targetCompany 
-          ? `site:linkedin.com/in "${jobTitle}" "${targetCompany}" -intitle:"jobs" -intitle:"hiring"`
-          : `site:linkedin.com/in "${jobTitle}" "${location}" -intitle:"jobs" -intitle:"hiring"`;
+          ? `site:linkedin.com/in ${roleQuery} "${targetCompany}" ${CULINARY_EXCLUSION} -intitle:"jobs" -intitle:"hiring"`
+          : `site:linkedin.com/in ${roleQuery} ${domainAnchor || `"${location}"`} ${CULINARY_EXCLUSION} -intitle:"jobs" -intitle:"hiring"`;
 
         let tavilyRes = await fetch("https://api.tavily.com/search", {
           method: "POST",
@@ -664,7 +790,7 @@ export default async function handler(req, res) {
 
         // Fallback query if targeted query returned few results (< 3)
         if (!tData || !tData.results || tData.results.length < 3) {
-          const fallbackQuery = `site:linkedin.com/in "${jobTitle}" -intitle:"jobs" -intitle:"hiring"`;
+          const fallbackQuery = `site:linkedin.com/in ${roleQuery} "${location}" ${CULINARY_EXCLUSION} -intitle:"jobs" -intitle:"hiring"`;
           const fbRes = await fetch("https://api.tavily.com/search", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -683,9 +809,20 @@ export default async function handler(req, res) {
           }
         }
 
+        const CULINARY_DISQUALIFIER = /\b(culinary|gastronomi|restaurant|restaurang|kök|köksmästare|kock|matlagning|bistro|café|bageri|bakery|sommelier|pastry|sous chef|chef de partie|executive chef|head chef|privet chef|private chef|dining|michelin|gastronomy|food & beverage|f&b)\b/i;
+
         if (tData && tData.results && tData.results.length > 0) {
           const candidates = tData.results
-            .filter(r => r.url && r.url.includes("linkedin.com/in/"))
+            .filter(r => {
+              if (!r.url || !r.url.includes("linkedin.com/in/")) return false;
+              if (!isCulinaryTarget) {
+                const fullSnippet = `${r.title || ""} ${r.content || ""}`.toLowerCase();
+                if (CULINARY_DISQUALIFIER.test(fullSnippet)) {
+                  return false; // Drop restaurant chefs completely!
+                }
+              }
+              return true;
+            })
             .map((r, index) => {
               const cleanTitle = (r.title || "")
                 .replace(/\s*\|\s*LinkedIn.*$/i, "")
@@ -757,13 +894,20 @@ export default async function handler(req, res) {
 
               // Fallback for role (ensuring it's not a sentence or duplicate of company)
               const cleanFallbackRole = (jobTitle && !/\b(har|ser|vill|ska|kan|är|vi)\b/i.test(jobTitle)) ? jobTitle : "Kandidat";
-              if (!role || /\b(har|ser|vill|ska|kan|är)\b/i.test(role) || (company && role.trim().toLowerCase() === company.trim().toLowerCase())) {
+              if (!role || /\b(har|ser|vill|ska|kan|är)\b/i.test(role) || /^(greater\s.*|sweden|sverige|stockholm.*|göteborg.*|malmö.*|\d{4}-\d{2}.*)$/i.test(role.trim()) || (company && role.trim().toLowerCase() === company.trim().toLowerCase())) {
                 role = cleanFallbackRole;
               }
 
-              // Fallback for company: NEVER use "LinkedIn-verifierad" as company name
-              if (!company || company.toLowerCase() === "linkedin" || company.toLowerCase() === "linkedin-verifierad") {
-                company = targetCompany || reqs.targetCompanies?.[0] || "";
+              const domainConfig = detectDomain(`${role} ${company} ${reqs.jobTitles?.join(" ") || ""}`);
+
+              // If role is just naked "Chef", contextualize it nicely for the Swedish corporate market
+              if (/^(chef|ledare)$/i.test(role.trim())) {
+                role = isChefOrLeadership ? (domainConfig.relevantJobs[0]?.split(",")[0] || "Enhetschef") : role;
+              }
+
+              // Fallback for company: NEVER use "LinkedIn", "Liked by...", dates or location as company name
+              if (!company || /^(linkedin.*|liked by.*|greater\s.*|\d{4}-\d{2}.*|n\/?a|education)$/i.test(company.trim())) {
+                company = targetCompany || reqs.targetCompanies?.[0] || domainConfig.companies[index % domainConfig.companies.length] || "Energibolag";
               }
               
               // Extract city / geografi from content
@@ -787,7 +931,7 @@ export default async function handler(req, res) {
               // Extract exact education cleanly from ## Education or word-bounded regex
               let candidateEducation = "";
               const eduSection = contentText.match(/## Education\s*\n+###?\s*([^\n\r]+)/i);
-              if (eduSection && eduSection[1] && !/^n\/?a$/i.test(eduSection[1].trim())) {
+              if (eduSection && eduSection[1] && !/^(n\/?a|education)$/i.test(eduSection[1].trim())) {
                 candidateEducation = eduSection[1].trim();
               } else {
                 const eduUniMatch = contentText.match(/\b(kth|royal institute of technology|chalmers|liu|linköpings universitet|luleå tekniska universitet|ltu|uppsala universitet|lunds universitet|lth|göteborgs universitet|karlstads universitet|mälardalens universitet|mdu|slu|sveriges lantbruksuniversitet|högskolan i [a-zåäö]+|högskolan väst|skinnskatteberg|gammelkroppa|nackademin|jensen|yrkeshögskola)\b/i);
@@ -801,13 +945,14 @@ export default async function handler(req, res) {
               const expSectionMatch = contentText.match(/## Experience\s*\n+([^\n\r]+(?:\n+[^\n\r]+)?)/i);
               let candidateRelevantJobs = [];
               if (expSectionMatch && expSectionMatch[1]) {
-                const expLines = expSectionMatch[1].split('\n').map(l => l.replace(/^#+\s*/, '').trim()).filter(l => l.length > 3 && !/view post|activity|followers/i.test(l));
+                const expLines = expSectionMatch[1].split('\n')
+                  .map(l => l.replace(/^#+\s*/, '').trim())
+                  .filter(l => l.length > 3 && !/^(##|view post|activity|followers|education|experience|about|kontakt|contact)/i.test(l));
                 if (expLines.length > 0) {
                   candidateRelevantJobs = expLines.slice(0, 2);
                 }
               }
               if (candidateRelevantJobs.length === 0) {
-                const domainConfig = detectDomain(`${role} ${company} ${reqs.jobTitles?.join(" ") || ""}`);
                 candidateRelevantJobs = [
                   domainConfig.relevantJobs[index % domainConfig.relevantJobs.length],
                   domainConfig.relevantJobs[(index + 1) % domainConfig.relevantJobs.length]

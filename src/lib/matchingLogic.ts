@@ -296,12 +296,27 @@ function decisionSummary(candidate: Candidate, req: JobRequirements): string {
   return `${matchText}, ${companyHint}, ${candidate.yearsOfExperience} år, ${candidate.location}. ${networkText} ${riskText}`;
 }
 
+const CULINARY_REGEX = /\b(culinary|gastronomi|restaurant|restaurang|kök|köksmästare|kock|matlagning|bistro|café|bageri|bakery|sommelier|pastry|sous chef|chef de partie|executive chef|head chef|privet chef|private chef|dining|michelin|gastronomy|food & beverage|f&b)\b/i;
+
+export function isCulinaryRole(candidate: Candidate): boolean {
+  const combined = `${candidate.currentRole} ${candidate.company} ${candidate.education || ""} ${candidate.summary || ""}`.toLowerCase();
+  return CULINARY_REGEX.test(combined);
+}
+
+export function isCulinaryRequirement(req: JobRequirements): boolean {
+  const combined = `${req.jobTitles.join(" ")} ${req.keySkills.join(" ")} ${req.industries.join(" ")}`.toLowerCase();
+  return /\b(kock|restaurang|kök|culinary|food|gastronomi)\b/i.test(combined);
+}
+
 function redFlags(candidate: Candidate, req: JobRequirements): string[] {
   const flags: string[] = [];
   const confidence = dataConfidence(candidate);
   const skillRawScore = skillMatch(candidate, req.keySkills);
   const titleRawScore = titleRelevance(candidate, req);
 
+  if (isCulinaryRole(candidate) && !isCulinaryRequirement(req)) {
+    flags.push("Kock/Restaurangprofil (ej företagsledare/chef)");
+  }
   if (confidence.score < 45) flags.push("Låg datakvalitet");
   if (!candidate.linkedin?.trim()) flags.push("LinkedIn saknas");
   if (!candidate.email?.trim() && !candidate.phone?.trim()) flags.push("Kontaktuppgifter saknas");
@@ -336,9 +351,19 @@ function seniorityScore(candidate: Candidate, req: JobRequirements): number {
 
 function titleRelevance(candidate: Candidate, req: JobRequirements): number {
   if (req.jobTitles.length === 0) return 50;
+  
+  // If the requirement is for a Swedish "chef" (leader/manager) but candidate is a culinary cook, 0 match!
+  if (!isCulinaryRequirement(req) && isCulinaryRole(candidate)) {
+    return 0;
+  }
+
   const normRole = normalizeStr(candidate.currentRole);
   const match = req.jobTitles.some(t => {
     const nt = normalizeStr(t);
+    // If target is "chef", only match if candidate role is actual Swedish leadership or English manager/director/head of
+    if (nt === "chef") {
+      return /\b(chef|enhetschef|gruppchef|avdelningschef|sektionschef|verksamhetschef|projektchef|manager|director|head of|lead|ledare)\b/i.test(candidate.currentRole);
+    }
     return normRole.includes(nt) || nt.includes(normRole) ||
       nt.split(" ").some(word => word.length > 3 && normRole.includes(word));
   });
@@ -465,7 +490,11 @@ function generateExplanation(candidate: Candidate, req: JobRequirements): string
 }
 
 export function rankCandidates(candidates: Candidate[], requirements: JobRequirements): ScoredCandidate[] {
-  return candidates
+  const eligibleCandidates = isCulinaryRequirement(requirements)
+    ? candidates
+    : candidates.filter(c => !isCulinaryRole(c));
+
+  return eligibleCandidates
     .map(candidate => {
       const scoreBreakdown = buildScoreBreakdown(candidate, requirements);
       const score = scoreBreakdown.reduce((sum, item) => sum + item.weightedScore, 0);

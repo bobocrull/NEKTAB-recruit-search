@@ -590,6 +590,82 @@ export const BUILTIN_SWEDISH_TALENT_POOL: Candidate[] = [
     phone: "Not available",
     evidenceSnippets: [],
     networkSignals: []
+  },
+
+  // ==========================================
+  // 9. Ledning, Chefer & Verksamhetsansvariga
+  // ==========================================
+  {
+    id: "pool-lead-1",
+    name: "Johan Lundgren",
+    currentRole: "Enhetschef Elnätsutveckling",
+    company: "Vattenfall Eldistribution",
+    yearsOfExperience: 10,
+    skills: ["Ledarskap", "Verksamhetsstyrning", "Affärsmässighet", "Personalansvar", "Elnät", "Projektstyrning", "Budgetansvar", "Strategisk planering"],
+    location: "Stockholm",
+    source: "https://www.linkedin.com/in/johan-lundgren-elnat",
+    linkedin: "https://www.linkedin.com/in/johan-lundgren-elnat",
+    education: "Civilingenjör Elektroteknik & Industriell Ekonomi, KTH",
+    summary: "Erfaren enhetschef som leder team inom nätutveckling och kapacitetsplanering med fullt personal- och budgetansvar.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-lead-2",
+    name: "Karin Westerberg",
+    currentRole: "Avdelningschef Projektering & Stationer",
+    company: "NEKTAB",
+    yearsOfExperience: 11,
+    skills: ["Ledarskap", "Affärsmässighet", "Stationsprojektering", "Elkraft", "Personalansvar", "Verksamhetsutveckling", "Budgetansvar"],
+    location: "Stockholm",
+    source: "https://www.linkedin.com/in/karin-westerberg-nektab",
+    linkedin: "https://www.linkedin.com/in/karin-westerberg-nektab",
+    education: "Civilingenjör Industriell Ekonomi, Chalmers Tekniska Högskola",
+    summary: "Drivande avdelningschef med bakgrund inom elkraftsprojektering som leder konsulter och uppdrag med starkt affärsmannaskap.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-lead-3",
+    name: "Magnus Berglund",
+    currentRole: "Gruppchef Mark och Tillstånd",
+    company: "Svenska kraftnät",
+    yearsOfExperience: 9,
+    skills: ["Ledarskap", "Ledningsrätt", "Nätkoncession", "Markåtkomst", "Verksamhetsstyrning", "Personalansvar", "Fastighetsrätt"],
+    location: "Sundsvall",
+    source: "https://www.linkedin.com/in/magnus-berglund-mark",
+    linkedin: "https://www.linkedin.com/in/magnus-berglund-mark",
+    education: "Civilingenjör Lantmäteri, KTH",
+    summary: "Gruppchef med djup sakkunskap inom markåtkomst och nätkoncessioner som coachar handläggare i transmissionsnätsprojekt.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
+  },
+  {
+    id: "pool-lead-4",
+    name: "Helena Nyström",
+    currentRole: "Enhetschef Regionnät",
+    company: "Ellevio",
+    yearsOfExperience: 8,
+    skills: ["Ledarskap", "Affärsmässighet", "Elnät", "Beredning", "Budgetansvar", "Personalansvar", "Strategisk planering"],
+    location: "Karlstad",
+    source: "https://www.linkedin.com/in/helena-nystrom-ellevio",
+    linkedin: "https://www.linkedin.com/in/helena-nystrom-ellevio",
+    education: "Civilingenjör Elektroteknik, Karlstads Universitet",
+    summary: "Resultatorienterad enhetschef med ansvar för regionalnätets investeringsprojekt och personalledning.",
+    sourceCategory: "LinkedIn",
+    email: "Not available",
+    phone: "Not available",
+    evidenceSnippets: [],
+    networkSignals: []
   }
 ];
 
@@ -640,7 +716,12 @@ const BUILTIN_RELEVANT_JOBS: Record<string, string[]> = {
   "pool-skog-3": ["Skoglig planerare, Norra Skog", "Produktionsledare Skog, SCA"],
   "pool-skog-4": ["Skogsinspektor, Södra Skogsägarna", "Planerare, Mellanskog"],
   "pool-skog-5": ["Skogsrådgivare, Mellanskog", "Virkesköpare, SCA"],
-  "pool-skog-6": ["Virkesköpare, Sveaskog", "Skogsrådgivare, Holmen"]
+  "pool-skog-6": ["Virkesköpare, Sveaskog", "Skogsrådgivare, Holmen"],
+
+  "pool-lead-1": ["Gruppchef Elnät, Vattenfall", "Projektledare Transmission, Svenska kraftnät"],
+  "pool-lead-2": ["Gruppchef Stationer, Sweco", "Senior Stationsprojektör, NEKTAB"],
+  "pool-lead-3": ["Senior Markhandläggare, Svenska kraftnät", "Fastighetsrättslig utredare, Lantmäteriet"],
+  "pool-lead-4": ["Gruppchef Beredning, Ellevio", "Projektledare Regionnät, E.ON"]
 };
 
 // Initialize relevantJobs on built-in talent pool
@@ -653,6 +734,46 @@ for (const cand of BUILTIN_SWEDISH_TALENT_POOL) {
 
 function detectDomain(text: string): DomainConfig {
   const lower = text.toLowerCase();
+
+  // 0. Ledarskap, Chefer & Verksamhetsansvariga
+  if (/chef|ledare|manager|head of|ledning|gruppchef|enhetschef|avdelningschef/i.test(lower)) {
+    if (/skog|virke/i.test(lower)) {
+      return {
+        companies: ["Mellanskog", "Södra Skogsägarna", "Sveaskog", "Holmen Skog", "SCA Skog", "Skogsstyrelsen"],
+        educations: [
+          "Jägmästare, Sveriges Lantbruksuniversitet (SLU)",
+          "Skogsmästare, Sveriges Lantbruksuniversitet (SLU)",
+          "Civilingenjör Industriell Ekonomi, SLU / KTH"
+        ],
+        skills: ["Ledarskap", "Skogsskötsel", "Verksamhetsstyrning", "Affärsmässighet", "Personalansvar", "Virkesköp", "Budgetansvar"],
+        relevantJobs: ["Områdeschef Skog, Mellanskog", "Distriktschef, Södra Skogsägarna", "Skogsförvaltare, Sveaskog"]
+      };
+    }
+    if (/mark|tillstånd/i.test(lower)) {
+      return {
+        companies: ["Svenska kraftnät", "Vattenfall Eldistribution", "Ellevio", "NEKTAB", "Sweco", "Lantmäteriet"],
+        educations: [
+          "Civilingenjör Lantmäteri / Fastighetsrätt, KTH",
+          "Juristexamen, Stockholms Universitet",
+          "Fastighetsrätt & Samhällsbyggnad, LTH"
+        ],
+        skills: ["Ledarskap", "Markåtkomst", "Ledningsrätt", "Verksamhetsstyrning", "Personalansvar", "Nätkoncession", "Budgetansvar"],
+        relevantJobs: ["Gruppchef Mark och Tillstånd, Svenska kraftnät", "Enhetschef Markåtkomst, Vattenfall", "Avdelningschef Fastighetsjuridik, Sweco"]
+      };
+    }
+    // Energy / Transmission / Engineering leadership
+    return {
+      companies: ["Vattenfall Eldistribution", "Ellevio", "Svenska kraftnät", "E.ON Energidistribution", "NEKTAB", "Sweco", "Mälarenergi", "Hitachi Energy"],
+      educations: [
+        "Civilingenjör Elektroteknik & Industriell Ekonomi, KTH",
+        "Civilingenjör Elkraft, Chalmers",
+        "Högskoleingenjör Elektroteknik, Karlstads Universitet",
+        "Master of Science in Industrial Engineering, Linköpings Universitet"
+      ],
+      skills: ["Ledarskap", "Verksamhetsstyrning", "Affärsmässighet", "Personalansvar", "Elnät", "Projektstyrning", "Budgetansvar", "Strategisk planering"],
+      relevantJobs: ["Enhetschef Elnät, Vattenfall", "Gruppchef Projektering, Sweco", "Avdelningschef Kraft, NEKTAB", "Projektchef Transmission, Svenska kraftnät"]
+    };
+  }
 
   // 1. Skog & Skoglig rådgivning / Skogsbruk
   if (/skog|virke|mellanskog|södra|sveaskog|holmen|sca|skogsäg|skötsel/i.test(lower)) {
@@ -861,10 +982,14 @@ export function generateSmartCandidates(reqs: JobRequirements): Candidate[] {
       domainConfig.relevantJobs[(i + 1) % domainConfig.relevantJobs.length]
     ].filter(Boolean);
 
+    const synthRole = /^(?:chef|ledare)$/i.test(primaryTitle.trim())
+      ? (allQueryText.includes("skog") ? "Områdeschef Skog" : allQueryText.includes("mark") ? "Gruppchef Mark & Tillstånd" : "Enhetschef Elnät")
+      : primaryTitle;
+
     synthesized.push({
       id: `synth-${Date.now()}-${i}`,
       name: fullName,
-      currentRole: primaryTitle,
+      currentRole: synthRole,
       company: company,
       yearsOfExperience: yoe,
       skills: candidateSkills,
@@ -874,7 +999,7 @@ export function generateSmartCandidates(reqs: JobRequirements): Candidate[] {
       education: education,
       relevantJobs: synthRelJobs,
       previousRoles: synthRelJobs,
-      summary: `Verksam som ${primaryTitle.toLowerCase()} på ${company} med gedigen expertis inom ${candidateSkills.slice(0, 3).join(", ")}.`,
+      summary: `Verksam som ${synthRole.toLowerCase()} på ${company} med gedigen expertis inom ${candidateSkills.slice(0, 3).join(", ")}.`,
       sourceCategory: "LinkedIn",
       email: "Not available",
       phone: "Not available",

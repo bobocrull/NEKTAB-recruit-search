@@ -256,6 +256,7 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
     "Elkraftsingenjör", "Senior Elkraftsingenjör", "Elkonstruktör", "CAD-konstruktör", "CAD-ritare",
     "Projektledare", "Byggledare", "Uppdragsledare", "Projekteringsledare", "Montageledare",
     "Reläskyddsspecialist", "Reläskyddstekniker", "Provningsingenjör",
+    "Enhetschef", "Gruppchef", "Avdelningschef", "Projektchef", "Sektionschef", "Verksamhetschef", "Platschef", "Affärsområdeschef", "Regionchef", "Teamledare", "Engineering Manager",
     "Miljöspecialist", "MKB-samordnare", "Ekolog", "Lantmätare"
   ];
 
@@ -306,6 +307,24 @@ function parseJobDescriptionLocally(text: string): JobRequirements {
 
   if (jobTitles.length === 0) {
     jobTitles.push("Rådgivare / Projektör");
+  }
+
+  // Step 3D: Contextualize generic "Chef" / "Ledare" to prevent false friend kitchen cook matching
+  for (let i = 0; i < jobTitles.length; i++) {
+    const jt = jobTitles[i].trim();
+    if (/^(?:chef|ledare)$/i.test(jt)) {
+      if (/skog|virke/i.test(lowerText)) {
+        jobTitles[i] = "Områdeschef Skog";
+      } else if (/mark|tillstånd|fastighet/i.test(lowerText)) {
+        jobTitles[i] = "Gruppchef Mark och Tillstånd";
+      } else if (/station|ställverk/i.test(lowerText)) {
+        jobTitles[i] = "Avdelningschef Stationer & Elkraft";
+      } else if (/elnät|elkraft|energi|kraftledning|distribution/i.test(lowerText)) {
+        jobTitles[i] = "Enhetschef / Gruppchef Elnät";
+      } else {
+        jobTitles[i] = "Enhetschef / Verksamhetschef";
+      }
+    }
   }
 
   // 4. Extensive Multi-Domain Skills Dictionary & Pattern Extraction
@@ -514,7 +533,19 @@ function buildQuickJobDescription(keyword: string): string {
   let skills = "Elnätsdesign, CAD, Projektering";
   let tasks = "Konstruktion och projektering av elnät.";
   
-  if (kw.includes("kraftledning") || kw.includes("luftledning")) {
+  if (kw.includes("chef") || kw.includes("ledare") || kw.includes("manager") || kw.includes("ledning")) {
+    roleTitle = "Enhetschef / Gruppchef Elnät";
+    skills = "Ledarskap, Verksamhetsstyrning, Affärsmässighet, Personalansvar, Elnät, Projektstyrning, Budgetansvar";
+    tasks = "Leda och utveckla medarbetare inom elnät och elkraft, driva verksamhetsutveckling samt ansvara för budget och måluppfyllelse.";
+  } else if (kw.includes("mark") || kw.includes("tillstånd") || kw.includes("markåtkomst")) {
+    roleTitle = "Mark- och tillståndshandläggare";
+    skills = "Ledningsrätt, Nätkoncession, Miljöbalken, Fastighetsrätt, Markåtkomst, Lantmäteriförrättning, Markägaravtal";
+    tasks = "Driva tillståndsprocesser och nätkoncessioner samt förhandla markägaravtal och ersättningar vid nätombyggnader.";
+  } else if (kw.includes("skog")) {
+    roleTitle = "Skoglig rådgivare";
+    skills = "Skogsskötsel, Skogsbruk, Rådgivning, Medlemsrelationer, Virkesköp, Affärsmässighet, B-körkort";
+    tasks = "Rådgivning och kontakt med skogsägare, planering av skogsskötsel och virkesförmedling.";
+  } else if (kw.includes("kraftledning") || kw.includes("luftledning")) {
     roleTitle = keyword.includes("Senior") ? "Senior Kraftledningsprojektör" : "Kraftledningsprojektör";
     skills = "Luftledning, Stolpplacering, CAD, MicroStation, Högspänning, Geografi, Markåtkomst";
     tasks = "Konstruktion av luftledningar (över 40kV), stolpplacering samt tillståndshantering.";
@@ -1811,8 +1842,27 @@ ${recruiterName || "NEKTAB"}`;
     const skills = reqs.keySkills?.length ? reqs.keySkills : [];
     const loc = reqs.location || "";
     
-    const titlePart = titles.length > 0 
-      ? `(${titles.map(t => `"${t}"`).join(" OR ")})`
+    // Disambiguate Swedish "chef" (leader/manager) from English "chef" (culinary/cook)
+    const isCulinaryTarget = titles.some(t => /kock|kök|restaurang|bistro|culinary|chef de partie|sous chef|gastronomi/i.test(t));
+    const isLeadershipTarget = titles.some(t => /(?:^|\b)(?:chef|ledare|manager|head of|ledning)(?:\b|$)/i.test(t));
+
+    let expandedTitles: string[];
+    let culinaryNegativeFilter = "";
+
+    if (isLeadershipTarget && !isCulinaryTarget) {
+      expandedTitles = titles.map(t => {
+        if (/^(?:chef|ledare)$/i.test(t.trim())) {
+          return '("enhetschef" OR "avdelningschef" OR "gruppchef" OR "verksamhetschef" OR "projektchef" OR "head of" OR "manager")';
+        }
+        return `"${t}"`;
+      });
+      culinaryNegativeFilter = ' -culinary -kitchen -restaurant -kök -restaurang -gastronomi -food -cook -bistro -"chef de partie" -"sous chef"';
+    } else {
+      expandedTitles = titles.map(t => `"${t}"`);
+    }
+
+    const titlePart = expandedTitles.length > 0 
+      ? `(${expandedTitles.join(" OR ")})`
       : "";
     
     const skillsPart = skills.slice(0, 3).map(s => `"${s}"`).join(" ");
@@ -1820,9 +1870,9 @@ ${recruiterName || "NEKTAB"}`;
     
     const baseQuery = [titlePart, skillsPart, locPart].filter(Boolean).join(" ");
     
-    const linkedinQuery = `site:linkedin.com/in ${baseQuery} -intitle:"jobs" -intitle:"hiring" -intitle:"rekryterare" -intitle:"recruiter"`;
-    const rocketreachQuery = `site:rocketreach.co ${baseQuery} -intitle:"jobs" -intitle:"hiring"`;
-    const githubQuery = `site:github.com ${titles[0] ? `"${titles[0]}"` : ""} ${skills.slice(0, 2).map(s => `"${s}"`).join(" ")} ${locPart} -intitle:"jobs"`;
+    const linkedinQuery = `site:linkedin.com/in ${baseQuery} -intitle:"jobs" -intitle:"hiring" -intitle:"rekryterare" -intitle:"recruiter"${culinaryNegativeFilter}`;
+    const rocketreachQuery = `site:rocketreach.co ${baseQuery} -intitle:"jobs" -intitle:"hiring"${culinaryNegativeFilter}`;
+    const githubQuery = `site:github.com ${expandedTitles[0] || ""} ${skills.slice(0, 2).map(s => `"${s}"`).join(" ")} ${locPart} -intitle:"jobs"${culinaryNegativeFilter}`;
 
     const linkedinUrl = `https://www.google.com/search?q=${encodeURIComponent(linkedinQuery)}`;
     const rocketreachUrl = `https://www.google.com/search?q=${encodeURIComponent(rocketreachQuery)}`;
